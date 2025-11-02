@@ -1,0 +1,519 @@
+import puppeteer from 'puppeteer';
+
+const INSTRUCTOR_URL = 'http://localhost:3001/instructor';
+const STUDENT_URL = 'http://localhost:3001';
+
+// Parse command line arguments
+let NUM_STUDENTS = 5; // Default number of students
+let AUTO_SUBMIT = false;
+
+// Check for flags
+for (let i = 2; i < process.argv.length; i++) {
+  const arg = process.argv[i];
+  if (arg === '-a' || arg === '--auto') {
+    AUTO_SUBMIT = true;
+    // Check if next argument is a number
+    if (i + 1 < process.argv.length && !isNaN(process.argv[i + 1])) {
+      NUM_STUDENTS = parseInt(process.argv[i + 1], 10);
+      i++; // Skip the next argument since we used it
+    }
+  }
+}
+
+console.log(`Configuration: ${NUM_STUDENTS} students, Auto-submit: ${AUTO_SUBMIT}`);
+
+async function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise);
+  console.error('Reason:', reason);
+  process.exit(1);
+});
+
+async function setupInstructor(browser) {
+  let instructorPage;
+  try {
+    console.log('🎓 Setting up instructor...');
+    instructorPage = await browser.newPage();
+    
+    // Set up error handlers for the page
+    instructorPage.on('pageerror', error => {
+      console.log('⚠️  Page error:', error.message);
+    });
+    
+    instructorPage.on('error', error => {
+      console.log('⚠️  Page crashed:', error.message);
+    });
+    
+    console.log(`🔗 Navigating to ${INSTRUCTOR_URL}...`);
+    await instructorPage.goto(INSTRUCTOR_URL, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 10000 
+    }).catch(err => {
+      throw new Error(`Failed to navigate to instructor page: ${err.message}`);
+    });
+    
+    // Wait a bit for React to render
+    await delay(1000);
+    
+    console.log('📝 Looking for "Create session" button...');
+    
+    // Try to wait for the button to appear
+    try {
+      await instructorPage.waitForSelector('button[type="submit"]', { timeout: 5000 });
+    } catch (e) {
+      console.log('⚠️  Timeout waiting for submit button, trying anyway...');
+    }
+    
+    // Get all buttons and find the create session button
+    const buttons = await instructorPage.$$('button').catch(() => []);
+    
+    if (buttons.length === 0) {
+      await instructorPage.screenshot({ path: 'instructor-no-buttons.png' });
+      throw new Error('No buttons found on instructor page');
+    }
+    
+    console.log(`Found ${buttons.length} button(s) on page`);
+    
+    let clicked = false;
+    for (const button of buttons) {
+      const text = await button.evaluate(el => el.textContent.trim()).catch(() => '');
+      console.log(`  Button text: "${text}"`);
+      if (text.toLowerCase().includes('create') && text.toLowerCase().includes('session')) {
+        console.log('🖱️  Clicking Create session button...');
+        await button.click();
+        clicked = true;
+        break;
+      }
+    }
+    
+    if (!clicked) {
+      // Try clicking the first submit button as fallback
+      const submitButton = await instructorPage.$('button[type="submit"]').catch(() => null);
+      if (submitButton) {
+        console.log('🖱️  Clicking submit button (fallback)...');
+        await submitButton.click();
+        clicked = true;
+      }
+    }
+    
+    if (!clicked) {
+      console.log('❌ Could not find Create session button');
+      await instructorPage.screenshot({ path: 'instructor-screenshot.png' });
+      throw new Error('Create session button not found');
+    }
+    
+    console.log('✅ Clicked Create Session button');
+    
+    // Wait for session code to appear (API call + React render)
+    await delay(1500);
+    
+    // Try to extract session code
+    let sessionCode = null;
+    
+    console.log('🔍 Searching for session code...');
+    
+    // Try to get the session code from the <strong> tag that contains it
+    // The InstructorDashboard shows: "Session code: <strong>{session?.code}</strong>"
+    sessionCode = await instructorPage.evaluate(() => {
+      // Look for the strong tag that's near "Session code:"
+      const allStrong = Array.from(document.querySelectorAll('strong'));
+      for (const strong of allStrong) {
+        const text = strong.textContent.trim();
+        // Session codes are exactly 4 alphanumeric characters
+        if (/^[A-Z0-9]{4}$/.test(text)) {
+          return text;
+        }
+      }
+      return null;
+    }).catch(() => null);
+    
+    // Fallback: try to parse from text content
+    if (!sessionCode) {
+      const pageText = await instructorPage.evaluate(() => document.body.textContent).catch(() => '');
+      
+      // Look for "Session code: XXXX" pattern specifically
+      const codeMatch = pageText.match(/Session code:\s*([A-Z0-9]{4})\b/i);
+      
+      if (codeMatch) {
+        sessionCode = codeMatch[1].toUpperCase();
+      } else {
+        // Look for all 4-character codes, but exclude common words
+        const allCodes = pageText.match(/\b[A-Z0-9]{4}\b/g);
+        if (allCodes && allCodes.length > 0) {
+          // Filter out common English words that are 4 letters
+          const excludeWords = ['CODE', 'ROLE', 'NAME', 'FISH', 'RANK', 'GAME', 'PLAY', 'USER', 'TEAM'];
+          const validCodes = allCodes.filter(code => !excludeWords.includes(code.toUpperCase()));
+          if (validCodes.length > 0) {
+            sessionCode = validCodes[0];
+            console.log(`⚠️  Found ${validCodes.length} potential code(s): ${validCodes.join(', ')}`);
+          }
+        }
+      }
+    }
+    
+    if (!sessionCode) {
+      console.log('❌ Could not extract session code automatically');
+      console.log('📄 Page content preview:');
+      console.log(pageText.substring(0, 800));
+      
+      // Take a screenshot for debugging
+      await instructorPage.screenshot({ path: 'instructor-screenshot.png' });
+      console.log('📸 Screenshot saved to instructor-screenshot.png');
+      
+      throw new Error('Session code not found');
+    }
+    
+    // Ensure the code is exactly 4 characters (trim if needed)
+    if (sessionCode.length > 4) {
+      console.log(`⚠️  Session code seems too long (${sessionCode}), trimming to 4 chars`);
+      sessionCode = sessionCode.substring(0, 4);
+    }
+    
+    console.log(`✅ Session Code: ${sessionCode}`);
+    
+    return { instructorPage, sessionCode };
+  } catch (error) {
+    console.error('❌ Error in setupInstructor:', error.message);
+    if (instructorPage) {
+      await instructorPage.screenshot({ path: 'instructor-error.png' }).catch(() => {});
+    }
+    throw error;
+  }
+}
+
+async function setupStudent(browser, studentNum, sessionCode) {
+  let studentPage;
+  try {
+    console.log(`👤 Setting up Student ${studentNum}...`);
+    studentPage = await browser.newPage();
+    
+    // Set up error handlers
+    studentPage.on('pageerror', error => {
+      console.log(`⚠️  Student ${studentNum} page error:`, error.message);
+    });
+    
+    await studentPage.goto(STUDENT_URL, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 10000 
+    }).catch(err => {
+      throw new Error(`Student ${studentNum}: Failed to navigate: ${err.message}`);
+    });
+    
+    await delay(500);
+    
+    // Find the first name input field
+    const firstNameInput = await studentPage.$('#first-name').catch(() => null);
+    if (firstNameInput) {
+      await firstNameInput.type(`Student${studentNum}`, { delay: 0 });
+      console.log(`✅ Student ${studentNum}: Entered first name`);
+    }
+    
+    await delay(50);
+    
+    // Find the last name input field
+    const lastNameInput = await studentPage.$('#last-name').catch(() => null);
+    if (lastNameInput) {
+      await lastNameInput.type(`Test`, { delay: 0 });
+      console.log(`✅ Student ${studentNum}: Entered last name`);
+    }
+    
+    await delay(50);
+    
+    // Find the session code input field
+    const codeInput = await studentPage.$('#session-code').catch(() => null);
+    
+    if (!codeInput) {
+      const screenshot = `student-${studentNum}-screenshot.png`;
+      await studentPage.screenshot({ path: screenshot });
+      console.log(`📸 Screenshot saved to ${screenshot}`);
+      throw new Error(`Student ${studentNum}: Session code input field not found`);
+    }
+    
+    // Enter session code
+    await codeInput.type(sessionCode, { delay: 0 });
+    console.log(`✅ Student ${studentNum}: Entered session code`);
+    
+    await delay(100);
+    
+    // Look for "Join" button
+    const buttons = await studentPage.$$('button').catch(() => []);
+    let joined = false;
+    
+    for (const button of buttons) {
+      const text = await button.evaluate(el => el.textContent).catch(() => '');
+      if (text.toLowerCase().includes('join')) {
+        await button.click();
+        joined = true;
+        console.log(`✅ Student ${studentNum}: Clicked Join Session`);
+        break;
+      }
+    }
+    
+    if (!joined) {
+      await studentPage.screenshot({ path: `student-${studentNum}-error.png` });
+      throw new Error(`Student ${studentNum}: Join button not found`);
+    }
+    
+    await delay(300);
+    
+    return studentPage;
+  } catch (error) {
+    console.error(`❌ Error setting up Student ${studentNum}:`, error.message);
+    if (studentPage) {
+      await studentPage.screenshot({ path: `student-${studentNum}-error.png` }).catch(() => {});
+    }
+    throw error;
+  }
+}
+
+async function autoSubmitForStudent(studentPage, studentNum, roundsToPlay) {
+  console.log(`🤖 Auto-submit enabled for Student ${studentNum}`);
+  
+  for (let round = 1; round <= roundsToPlay; round++) {
+    try {
+      // Wait for round to start - look for enabled input
+      console.log(`⏳ Student ${studentNum} Round ${round}: Waiting for round to start...`);
+      
+      let inputEnabled = false;
+      let attempts = 0;
+      const maxAttempts = 30; // 30 seconds max wait
+      
+      while (!inputEnabled && attempts < maxAttempts) {
+        inputEnabled = await studentPage.evaluate(() => {
+          const input = document.querySelector('#fish-input');
+          return input && !input.disabled;
+        }).catch(() => false);
+        
+        if (!inputEnabled) {
+          await delay(1000);
+          attempts++;
+        }
+      }
+      
+      if (!inputEnabled) {
+        console.log(`⚠️  Student ${studentNum} Round ${round}: Input never became ready`);
+        continue;
+      }
+      
+      console.log(`✅ Student ${studentNum} Round ${round}: Round started`);
+      
+      // Generate random fish count (1 to 5, not 0)
+      const randomFish = Math.floor(Math.random() * 5) + 1;
+      
+      // Fill in the fish input (React-compatible way)
+      await studentPage.evaluate((fish) => {
+        const input = document.querySelector('#fish-input');
+        if (input && !input.disabled) {
+          // Clear the input first
+          input.value = '';
+          
+          // Use React's way to trigger changes
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            'value'
+          ).set;
+          nativeInputValueSetter.call(input, fish.toString());
+          
+          // Trigger React's onChange by dispatching input and change events
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }, randomFish);
+      
+      console.log(`🎣 Student ${studentNum} Round ${round}: Submitting ${randomFish} fish`);
+      
+      await delay(200);
+      
+      // Click submit button
+      const submitted = await studentPage.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        for (const button of buttons) {
+          if (button.textContent.toLowerCase().includes('submit') && !button.disabled) {
+            button.click();
+            return true;
+          }
+        }
+        return false;
+      }).catch(() => false);
+      
+      if (submitted) {
+        console.log(`✅ Student ${studentNum} Round ${round}: Submitted successfully`);
+      } else {
+        console.log(`⚠️  Student ${studentNum} Round ${round}: Could not submit`);
+      }
+      
+      // Wait for input to become disabled (round ended)
+      console.log(`⏳ Student ${studentNum} Round ${round}: Waiting for round to end...`);
+      let roundEnded = false;
+      attempts = 0;
+      
+      while (!roundEnded && attempts < 30) {
+        roundEnded = await studentPage.evaluate(() => {
+          const input = document.querySelector('#fish-input');
+          return !input || input.disabled;
+        }).catch(() => true);
+        
+        if (!roundEnded) {
+          await delay(1000);
+          attempts++;
+        }
+      }
+      
+      console.log(`✅ Student ${studentNum} Round ${round}: Round complete`);
+      
+      // Extra wait for results to display and countdown to next round
+      await delay(2000);
+      
+    } catch (error) {
+      console.error(`❌ Student ${studentNum} Round ${round} error:`, error.message);
+    }
+  }
+}
+
+async function main() {
+  console.log('🚀 Starting Tragedy of Commons Game Test Automation...\n');
+  
+  let browser;
+  
+  try {
+    console.log('🌐 Launching browser...');
+    browser = await puppeteer.launch({
+      headless: false,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process'
+      ],
+      defaultViewport: null,
+      ignoreHTTPSErrors: true,
+      protocolTimeout: 30000
+    });
+    
+    console.log('✅ Browser launched successfully\n');
+    
+    // Handle browser disconnection
+    browser.on('disconnected', () => {
+      console.log('⚠️  Browser disconnected');
+    });
+    
+    // Setup instructor and get session code
+    const { instructorPage, sessionCode } = await setupInstructor(browser);
+    
+    console.log('\n' + '='.repeat(50));
+    console.log(`📋 SESSION CODE: ${sessionCode}`);
+    console.log('='.repeat(50) + '\n');
+    
+    // Setup students
+    const studentPages = [];
+    for (let i = 1; i <= NUM_STUDENTS; i++) {
+      const studentPage = await setupStudent(browser, i, sessionCode);
+      studentPages.push(studentPage);
+      await delay(100); // Small delay between students
+    }
+    
+    console.log('\n✅ All students joined successfully!');
+    
+    // Wait a moment for the instructor dashboard to update with all players
+    await delay(800);
+    
+    // Click "Start game" button on instructor page
+    console.log('\n🎮 Starting the game...');
+    try {
+      // Bring instructor page to front
+      await instructorPage.bringToFront();
+      
+      // Look for the "Start game" button
+      const startButtons = await instructorPage.$$('button').catch(() => []);
+      let started = false;
+      
+      for (const button of startButtons) {
+        const text = await button.evaluate(el => el.textContent.trim()).catch(() => '');
+        if (text.toLowerCase().includes('start') && text.toLowerCase().includes('game')) {
+          console.log('🖱️  Clicking Start game button...');
+          await button.click();
+          started = true;
+          break;
+        }
+      }
+      
+      if (!started) {
+        console.log('⚠️  Could not find Start game button (may need exact player count)');
+        console.log('    Check if you have the required number of students joined');
+      } else {
+        console.log('✅ Game started!');
+        
+        // If auto-submit is enabled, start auto-submitting for all students
+        if (AUTO_SUBMIT) {
+          console.log('\n🤖 Auto-submit mode enabled! Students will automatically submit decisions.');
+          const ROUNDS = 3; // Default number of rounds
+          
+          // Start auto-submit for each student (in parallel)
+          const autoSubmitPromises = studentPages.map((page, index) => {
+            return autoSubmitForStudent(page, index + 1, ROUNDS);
+          });
+          
+          // Don't await these - let them run in background
+          Promise.all(autoSubmitPromises).catch(err => {
+            console.error('Error in auto-submit:', err);
+          });
+        }
+      }
+    } catch (error) {
+      console.log('⚠️  Error trying to start game:', error.message);
+    }
+    
+    console.log(`\n🎮 Game session ready with ${NUM_STUDENTS} students`);
+    if (AUTO_SUBMIT) {
+      console.log('🤖 Auto-submit is ENABLED - students will submit automatically');
+    } else {
+      console.log('💡 Tip: Use -a or --auto flag to enable auto-submit for students');
+      console.log('💡 Example: npm run automate -- -a 8 (opens 8 students with auto-submit)');
+    }
+    console.log('🖥️  Browser windows will remain open for testing');
+    console.log('⏹️  Press Ctrl+C to close all windows and exit\n');
+    
+    // Handle Ctrl+C gracefully
+    process.on('SIGINT', async () => {
+      console.log('\n\n🛑 Shutting down...');
+      await browser.close();
+      process.exit(0);
+    });
+    
+    // Keep the script running
+    await new Promise(() => {});
+    
+  } catch (error) {
+    console.error('\n❌ Error during automation:', error.message);
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error('Error closing browser:', closeError.message);
+      }
+    }
+    process.exit(1);
+  }
+}
+
+// Suppress certain Puppeteer warnings
+process.on('warning', (warning) => {
+  if (warning.name === 'DeprecationWarning') {
+    return; // Ignore deprecation warnings
+  }
+  console.warn(warning);
+});
+
+main().catch((error) => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
+
