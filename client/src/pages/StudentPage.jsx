@@ -244,7 +244,29 @@ export function StudentPage() {
               Join session
             </button>
           </form>
-          {errorMessage && <p style={{ color: '#dc2626' }}>{errorMessage}</p>}
+          {errorMessage && (
+            <div style={{ 
+              marginTop: '1rem',
+              padding: '1rem',
+              backgroundColor: errorMessage === 'GAME_ALREADY_STARTED' ? '#fef3c7' : '#fee2e2',
+              border: `2px solid ${errorMessage === 'GAME_ALREADY_STARTED' ? '#f59e0b' : '#dc2626'}`,
+              borderRadius: '8px',
+              color: errorMessage === 'GAME_ALREADY_STARTED' ? '#92400e' : '#991b1b'
+            }}>
+              {errorMessage === 'GAME_ALREADY_STARTED' ? (
+                <>
+                  <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>
+                    ⚠️ Game Already Started
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    This session is already in progress. Please team up with someone else to see their screen and collaborate!
+                  </p>
+                </>
+              ) : (
+                <p style={{ margin: 0 }}>{errorMessage}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

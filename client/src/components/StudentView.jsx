@@ -53,10 +53,14 @@ export function StudentView({
     <div className="card student-game-card">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
-          <h2 style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>Session {sessionCode}</h2>
-          {currentRound > 0 && (
-            <p style={{ margin: '0.25rem 0', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Round {currentRound} of {totalRounds}</p>
-          )}
+          <h2 style={{ margin: 0, fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>
+            Session {sessionCode}
+            {currentRound > 0 && (
+              <span style={{ marginLeft: '1rem', color: '#6b7280', fontSize: 'clamp(1rem, 3vw, 1.25rem)' }}>
+                Round {currentRound} of {totalRounds}
+              </span>
+            )}
+          </h2>
         </div>
       </header>
 
@@ -90,7 +94,7 @@ export function StudentView({
                 : gameComplete
                   ? '🎉 Game Complete!'
                   : roundActive 
-                    ? `Round ${currentRound} ending in ${timer}s` 
+                    ? `Round ${currentRound} ends in ${timer}s` 
                     : 'Calculating results...'}
             </div>
           </div>
@@ -101,43 +105,13 @@ export function StudentView({
             padding: '1.5rem',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
             borderRadius: '12px',
-            marginBottom: '1rem'
+            marginBottom: '0'
           }}>
             <div style={{ fontSize: '3rem', fontWeight: 'bold', color: textColor, lineHeight: 1 }}>
               {remainingFish}
             </div>
             <div style={{ fontSize: '0.875rem', color: textColor, marginTop: '0.25rem' }}>
               fish remaining
-            </div>
-          </div>
-          
-          {/* Visual Fish Health Bar */}
-          <div style={{ marginBottom: '0' }}>
-            <div style={{ 
-              width: '100%', 
-              height: '32px', 
-              backgroundColor: 'rgba(255, 255, 255, 0.5)', 
-              borderRadius: '12px', 
-              overflow: 'hidden',
-              border: '2px solid rgba(0, 0, 0, 0.1)',
-              position: 'relative'
-            }}>
-              <div 
-                style={{ 
-                  width: `${fishHealth}%`, 
-                  height: '100%', 
-                  backgroundColor: borderColor,
-                  transition: 'width 0.5s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.875rem',
-                  fontWeight: 'bold',
-                  color: 'white'
-                }}
-              >
-                {fishHealth > 0 && `${Math.round(fishHealth)}%`}
-              </div>
             </div>
           </div>
         </div>

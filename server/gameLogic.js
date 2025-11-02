@@ -151,6 +151,12 @@ export function createGameManager(io) {
       }
       
       const session = ensureSession(code);
+      
+      // Prevent students from joining if game is already running
+      if (role !== 'instructor' && session.status === STATUS.RUNNING) {
+        throw new Error('GAME_ALREADY_STARTED');
+      }
+      
       registerPlayer(session, socket, { playerName, role });
       socket.emit('joinedSession', {
         code,
