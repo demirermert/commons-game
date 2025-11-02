@@ -55,10 +55,7 @@ export function StudentView({
         <div>
           <h2 style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>Session {sessionCode}</h2>
           {currentRound > 0 && (
-            <>
-              <p style={{ margin: '0.25rem 0', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Round {currentRound} of {totalRounds}</p>
-              <p style={{ margin: '0.25rem 0', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Remaining fish: <strong>{remainingFish}</strong></p>
-            </>
+            <p style={{ margin: '0.25rem 0', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Round {currentRound} of {totalRounds}</p>
           )}
         </div>
       </header>
@@ -235,67 +232,56 @@ export function StudentView({
             </p>
           </div>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-          <div style={{ textAlign: 'center' }}>
-            <label htmlFor="fish-input" style={{ fontSize: '1.5rem', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
-              How many fish to catch?
-            </label>
-            <input
-              id="fish-input"
-              type="number"
-              step="1"
-              min="0"
-              max={maxCatch}
-              value={fishCount}
-              onChange={event => setFishCount(event.target.value)}
-              disabled={!roundActive || hasSubmitted}
-              placeholder={`0 to ${maxCatch}`}
-              style={{ 
-                width: '150px',
-                padding: '0.75rem',
-                fontSize: '1.25rem',
-                textAlign: 'center'
-              }}
-            />
-            {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
-          </div>
-          <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
-            {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit decision'}
-          </button>
-        </form>
-      )}
+      ) : !gameComplete ? (
+        <>
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+            <div style={{ textAlign: 'center' }}>
+              <label htmlFor="fish-input" style={{ fontSize: '1.5rem', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
+                How many fish to catch?
+              </label>
+              <input
+                id="fish-input"
+                type="number"
+                step="1"
+                min="0"
+                max={maxCatch}
+                value={fishCount}
+                onChange={event => setFishCount(event.target.value)}
+                disabled={!roundActive || hasSubmitted}
+                placeholder={`0 to ${maxCatch}`}
+                style={{ 
+                  width: '150px',
+                  padding: '0.75rem',
+                  fontSize: '1.25rem',
+                  textAlign: 'center'
+                }}
+              />
+              {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
+            </div>
+            <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
+              {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit decision'}
+            </button>
+          </form>
 
-      {hasSubmitted && roundActive && (
-        <div style={{ 
-          backgroundColor: '#d1fae5', 
-          border: '2px solid #059669', 
-          borderRadius: '8px', 
-          padding: '1rem', 
-          marginTop: '1rem',
-          textAlign: 'center'
-        }}>
-          <p style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
-            ✓ Your decision has been submitted!
-          </p>
-          <p style={{ color: '#047857', margin: '0.5rem 0 0 0' }}>
-            Waiting for other players to submit their decisions...
-          </p>
-        </div>
-      )}
-
-      {latestResult && (
-        <div className="card" style={{ backgroundColor: '#f8fafc', marginTop: '1.5rem' }}>
-          <h3>Last round summary</h3>
-          <p>You caught: {latestResult.caught} fish</p>
-          {latestResult.pondTotalCaught !== undefined && (
-            <p>Total caught by pond: <strong>{latestResult.pondTotalCaught} fish</strong></p>
+          {hasSubmitted && roundActive && (
+            <div style={{ 
+              backgroundColor: '#d1fae5', 
+              border: '2px solid #059669', 
+              borderRadius: '8px', 
+              padding: '1rem', 
+              marginTop: '1rem',
+              textAlign: 'center'
+            }}>
+              <p style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
+                ✓ Your decision has been submitted!
+              </p>
+              <p style={{ color: '#047857', margin: '0.5rem 0 0 0' }}>
+                Waiting for other players to submit their decisions...
+              </p>
+            </div>
           )}
-          {latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
-            <p>Remaining <strong>{latestResult.fishBeforeDoubling}</strong> fish doubled to <strong>{latestResult.fishAfterDoubling}</strong> fish</p>
-          )}
-        </div>
-      )}
+        </>
+      ) : null}
 
       {latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
         <div style={{
@@ -307,10 +293,16 @@ export function StudentView({
           textAlign: 'center'
         }}>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            🐟 You all caught <strong>{latestResult.pondTotalCaught}</strong> fish total.
+            You caught: <strong>{latestResult.caught}</strong> fish
+          </p>
+          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+            🐟 Pond caught <strong>{latestResult.pondTotalCaught}</strong> fish total
+          </p>
+          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+            Remaining <strong>{latestResult.fishBeforeDoubling}</strong> fish doubled to <strong>{latestResult.fishAfterDoubling}</strong> fish!
           </p>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: 0, fontWeight: 600 }}>
-            The remaining <strong>{latestResult.fishBeforeDoubling}</strong> fish doubled to <strong>{latestResult.fishAfterDoubling}</strong> fish!
+            Your total fish: <strong>{latestResult.totalFish}</strong>
           </p>
         </div>
       )}
