@@ -235,6 +235,10 @@ export function createGameManager(io) {
 
   function startNextRound(session) {
     clearTimers(session);
+    
+    // Reset the finalization flag for the new round
+    session.isFinalizingRound = false;
+    
     if (session.currentRound >= session.config.rounds) {
       finalizeSession(session);
       return;
@@ -328,6 +332,13 @@ export function createGameManager(io) {
   }
 
   function finalizeRound(session) {
+    // Guard against multiple calls
+    if (session.isFinalizingRound) {
+      console.log(`⚠️  Already finalizing round ${session.currentRound}, skipping duplicate call`);
+      return;
+    }
+    session.isFinalizingRound = true;
+    
     const roundNumber = session.currentRound;
     const roundResults = [];
     
@@ -468,6 +479,11 @@ export function createGameManager(io) {
     const countdownTime = session.config.countdownTime;
     let timeRemaining = countdownTime;
     
+    // Clear any existing countdown interval
+    if (session.timers.countdownInterval) {
+      clearInterval(session.timers.countdownInterval);
+    }
+    
     // Emit initial countdown
     io.to(session.code).emit('roundCountdown', {
       timeRemaining,
@@ -475,7 +491,7 @@ export function createGameManager(io) {
     });
     
     // Update countdown every second
-    const countdownInterval = setInterval(() => {
+    session.timers.countdownInterval = setInterval(() => {
       timeRemaining -= 1;
       
       if (timeRemaining > 0) {
@@ -484,13 +500,17 @@ export function createGameManager(io) {
           nextRound: session.currentRound + 1
         });
       } else {
-        clearInterval(countdownInterval);
+        clearInterval(session.timers.countdownInterval);
+        session.timers.countdownInterval = null;
       }
     }, 1000);
     
     // Start next round after countdown completes
     session.timers.countdown = setTimeout(() => {
-      clearInterval(countdownInterval);
+      if (session.timers.countdownInterval) {
+        clearInterval(session.timers.countdownInterval);
+        session.timers.countdownInterval = null;
+      }
       startNextRound(session);
     }, countdownTime * 1000);
   }
@@ -533,9 +553,13 @@ export function createGameManager(io) {
     if (session.timers.countdown) {
       clearTimeout(session.timers.countdown);
     }
+    if (session.timers.countdownInterval) {
+      clearInterval(session.timers.countdownInterval);
+    }
     session.timers.round = null;
     session.timers.reveal = null;
     session.timers.countdown = null;
+    session.timers.countdownInterval = null;
   }
 
   function handleDisconnect(socketId) {
