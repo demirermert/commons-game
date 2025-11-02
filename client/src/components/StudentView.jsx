@@ -21,11 +21,20 @@ export function StudentView({
 }) {
   const [fishCount, setFishCount] = useState('');
   const [error, setError] = useState('');
+  const [displayedFish, setDisplayedFish] = useState(remainingFish);
 
   useEffect(() => {
     setFishCount('');
     setError('');
   }, [currentRound]);
+
+  // Update displayed fish only when round is active or countdown is active
+  // Keep it frozen during "Calculating results..." phase
+  useEffect(() => {
+    if (roundActive || countdown) {
+      setDisplayedFish(remainingFish);
+    }
+  }, [remainingFish, roundActive, countdown]);
 
   const handleSubmit = event => {
     event.preventDefault();
@@ -44,7 +53,7 @@ export function StudentView({
 
   // Calculate fish health for visual (based on 40 fish maximum - the cap)
   const maxFish = 40;
-  const fishHealth = Math.min(100, Math.max(0, (remainingFish / maxFish) * 100));
+  const fishHealth = Math.min(100, Math.max(0, (displayedFish / maxFish) * 100));
   const bgColor = fishHealth > 66 ? '#d1fae5' : fishHealth > 33 ? '#fed7aa' : '#fecaca';
   const borderColor = fishHealth > 66 ? '#10b981' : fishHealth > 33 ? '#f59e0b' : '#ef4444';
   const textColor = fishHealth > 66 ? '#065f46' : fishHealth > 33 ? '#9a3412' : '#991b1b';
@@ -63,6 +72,34 @@ export function StudentView({
           </h2>
         </div>
       </header>
+
+      {/* Previous Round Result - Show above pond visualization during countdown */}
+      {countdown && latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
+        <div style={{
+          backgroundColor: '#dbeafe',
+          border: '2px solid #3b82f6',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          marginBottom: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ color: '#1e40af', fontSize: '1.5rem', marginTop: 0, marginBottom: '1rem' }}>
+            Previous Round Result
+          </h3>
+          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+            You caught: <strong>{latestResult.caught}</strong> fish
+          </p>
+          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+            🐟 Pond caught <strong>{latestResult.pondTotalCaught}</strong> fish total
+          </p>
+          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+            Remaining <strong>{latestResult.fishBeforeDoubling}</strong> fish doubled to <strong>{latestResult.fishAfterDoubling}</strong> fish!
+          </p>
+          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: 0, fontWeight: 600 }}>
+            Your total fish: <strong>{latestResult.totalFish}</strong>
+          </p>
+        </div>
+      )}
 
       {/* Pond Visualization */}
       {pondId && (
@@ -108,7 +145,7 @@ export function StudentView({
             marginBottom: '0'
           }}>
             <div style={{ fontSize: '3rem', fontWeight: 'bold', color: textColor, lineHeight: 1 }}>
-              {remainingFish}
+              {displayedFish}
             </div>
             <div style={{ fontSize: '0.875rem', color: textColor, marginTop: '0.25rem' }}>
               fish remaining
@@ -255,33 +292,6 @@ export function StudentView({
           )}
         </>
       ) : null}
-
-      {countdown && latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
-        <div style={{
-          backgroundColor: '#dbeafe',
-          border: '2px solid #3b82f6',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          marginTop: '1.5rem',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ color: '#1e40af', fontSize: '1.5rem', marginTop: 0, marginBottom: '1rem' }}>
-            Previous Round Result
-          </h3>
-          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            You caught: <strong>{latestResult.caught}</strong> fish
-          </p>
-          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            🐟 Pond caught <strong>{latestResult.pondTotalCaught}</strong> fish total
-          </p>
-          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            Remaining <strong>{latestResult.fishBeforeDoubling}</strong> fish doubled to <strong>{latestResult.fishAfterDoubling}</strong> fish!
-          </p>
-          <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: 0, fontWeight: 600 }}>
-            Your total fish: <strong>{latestResult.totalFish}</strong>
-          </p>
-        </div>
-      )}
 
       {history && history.length > 0 && (
         <div style={{ marginTop: '1.5rem', marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
