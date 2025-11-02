@@ -120,7 +120,11 @@ export function InstructorPage() {
           playersPerPond: Number(instructorConfig.playersPerPond)
         }
       };
-      const response = await fetch('/api/session', {
+      
+      const API_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4001';
+      console.log('🔗 Creating session at:', `${API_URL}/session`);
+      
+      const response = await fetch(`${API_URL}/session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
