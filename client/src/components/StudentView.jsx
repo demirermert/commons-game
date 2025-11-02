@@ -180,7 +180,6 @@ export function StudentView({
                 }}
               >
                 <span style={{ color: '#1f2937' }}>
-                  {index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}
                   {player.name}
                 </span>
                 <span style={{ color: '#059669', fontWeight: 'bold' }}>
@@ -259,7 +258,7 @@ export function StudentView({
               {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
             </div>
             <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
-              {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit decision'}
+              {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit'}
             </button>
           </form>
 
