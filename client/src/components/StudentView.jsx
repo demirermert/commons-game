@@ -282,7 +282,7 @@ export function StudentView({
         </>
       ) : null}
 
-      {latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
+      {countdown && latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
         <div style={{
           backgroundColor: '#dbeafe',
           border: '2px solid #3b82f6',
@@ -291,6 +291,9 @@ export function StudentView({
           marginTop: '1.5rem',
           textAlign: 'center'
         }}>
+          <h3 style={{ color: '#1e40af', fontSize: '1.5rem', marginTop: 0, marginBottom: '1rem' }}>
+            Previous Round Result
+          </h3>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
             You caught: <strong>{latestResult.caught}</strong> fish
           </p>

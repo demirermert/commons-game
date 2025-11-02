@@ -1,7 +1,7 @@
 const DEFAULT_CONFIG = {
   rounds: 3,
   roundTime: 15,
-  resultRevealTime: 5,
+  resultRevealTime: 2, // Brief pause before showing results
   countdownTime: 10, // Countdown between rounds
   initialFish: 20,
   maxFish: 40, // Maximum fish population (cap after doubling)
