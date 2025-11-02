@@ -51,9 +51,12 @@ export function StudentPage() {
   useEffect(() => {
     const handleJoinedSession = payload => {
       setJoinInfo(payload);
-      setRoundInfo(null);
-      setHistory([]);
-      setLatestResult(null);
+      // Only clear state if joining for the first time (not reconnecting to active game)
+      if (payload.status !== 'running') {
+        setRoundInfo(null);
+        setHistory([]);
+        setLatestResult(null);
+      }
       setErrorMessage('');
     };
     const handleSessionUpdate = payload => {

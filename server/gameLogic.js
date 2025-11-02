@@ -122,21 +122,36 @@ export function createGameManager(io) {
     if (!playerName) {
       throw new Error('Name is required');
     }
-    const player = {
-      socketId: socket.id,
-      sessionCode: session.code,
-      name: playerName,
-      role: role === 'instructor' ? 'instructor' : 'student',
-      connected: true,
-      totalFish: 0,
-      history: [],
-      pondId: null // Will be assigned when game starts
-    };
-    session.players.set(socket.id, player);
+    
+    // Check if this player already exists (reconnection)
+    const existingPlayer = Array.from(session.players.values()).find(
+      p => p.name === playerName && p.role === (role === 'instructor' ? 'instructor' : 'student')
+    );
+    
+    if (existingPlayer) {
+      // Player is reconnecting - preserve their data, just update socket
+      existingPlayer.socketId = socket.id;
+      existingPlayer.connected = true;
+      session.players.set(socket.id, existingPlayer);
+    } else {
+      // New player
+      const player = {
+        socketId: socket.id,
+        sessionCode: session.code,
+        name: playerName,
+        role: role === 'instructor' ? 'instructor' : 'student',
+        connected: true,
+        totalFish: 0,
+        history: [],
+        pondId: null // Will be assigned when game starts
+      };
+      session.players.set(socket.id, player);
+    }
+    
     socket.join(session.code);
     socket.data.sessionCode = session.code;
-    socket.data.role = player.role;
-    if (player.role === 'instructor') {
+    socket.data.role = role === 'instructor' ? 'instructor' : 'student';
+    if (role === 'instructor') {
       session.instructorSocket = socket.id;
     }
   }
