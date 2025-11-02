@@ -50,14 +50,14 @@ export function StudentView({
   const textColor = fishHealth > 66 ? '#065f46' : fishHealth > 33 ? '#9a3412' : '#991b1b';
 
   return (
-    <div className="card">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+    <div className="card student-game-card">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
-          <h2>Session {sessionCode}</h2>
+          <h2 style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>Session {sessionCode}</h2>
           {currentRound > 0 && (
             <>
-              <p>Round {currentRound} of {totalRounds}</p>
-              <p>Remaining fish: <strong>{remainingFish}</strong></p>
+              <p style={{ margin: '0.25rem 0', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Round {currentRound} of {totalRounds}</p>
+              <p style={{ margin: '0.25rem 0', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Remaining fish: <strong>{remainingFish}</strong></p>
             </>
           )}
         </div>
@@ -65,7 +65,7 @@ export function StudentView({
 
       {/* Pond Visualization */}
       {pondId && (
-        <div style={{ 
+        <div className="student-pond-card" style={{ 
           padding: '1.5rem', 
           backgroundColor: bgColor,
           borderRadius: '16px',

@@ -204,7 +204,7 @@ export function StudentPage() {
           </div>
 
           <form onSubmit={handleJoinSession} style={{ display: 'grid', gap: '1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+            <div className="name-inputs-grid">
               <div className="input-row">
                 <label htmlFor="first-name">First name</label>
                 <input
