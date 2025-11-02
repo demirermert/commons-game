@@ -329,46 +329,55 @@ async function autoSubmitForStudent(studentPage, studentNum, roundsToPlay) {
       // Generate random fish count (1 to 5, not 0)
       const randomFish = Math.floor(Math.random() * 5) + 1;
       
+      console.log(`🎣 Student ${studentNum} Round ${round}: Attempting to submit ${randomFish} fish`);
+      
       // Fill in the fish input (React-compatible way)
-      await studentPage.evaluate((fish) => {
+      const inputResult = await studentPage.evaluate((fish) => {
         const input = document.querySelector('#fish-input');
-        if (input && !input.disabled) {
-          // Clear the input first
-          input.value = '';
-          
-          // Use React's way to trigger changes
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype,
-            'value'
-          ).set;
-          nativeInputValueSetter.call(input, fish.toString());
-          
-          // Trigger React's onChange by dispatching input and change events
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
+        if (!input) return { success: false, reason: 'Input not found' };
+        if (input.disabled) return { success: false, reason: 'Input disabled' };
+        
+        // Clear the input first
+        input.value = '';
+        input.focus();
+        
+        // Use React's way to trigger changes
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype,
+          'value'
+        ).set;
+        nativeInputValueSetter.call(input, fish.toString());
+        
+        // Trigger React's onChange by dispatching multiple events
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.dispatchEvent(new Event('blur', { bubbles: true }));
+        
+        return { success: true, value: input.value };
       }, randomFish);
       
-      console.log(`🎣 Student ${studentNum} Round ${round}: Submitting ${randomFish} fish`);
+      console.log(`   Input result:`, inputResult);
       
-      await delay(200);
+      await delay(500);
       
       // Click submit button
       const submitted = await studentPage.evaluate(() => {
+        const input = document.querySelector('#fish-input');
+        const inputValue = input ? input.value : 'no input';
         const buttons = Array.from(document.querySelectorAll('button'));
         for (const button of buttons) {
           if (button.textContent.toLowerCase().includes('submit') && !button.disabled) {
             button.click();
-            return true;
+            return { success: true, inputValue };
           }
         }
-        return false;
-      }).catch(() => false);
+        return { success: false, inputValue };
+      }).catch(() => ({ success: false, inputValue: 'error' }));
       
-      if (submitted) {
-        console.log(`✅ Student ${studentNum} Round ${round}: Submitted successfully`);
+      if (submitted.success) {
+        console.log(`✅ Student ${studentNum} Round ${round}: Submitted successfully with value ${submitted.inputValue}`);
       } else {
-        console.log(`⚠️  Student ${studentNum} Round ${round}: Could not submit`);
+        console.log(`⚠️  Student ${studentNum} Round ${round}: Could not submit (input value was ${submitted.inputValue})`);
       }
       
       // Wait for input to become disabled (round ended)

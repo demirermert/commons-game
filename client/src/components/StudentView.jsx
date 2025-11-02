@@ -86,11 +86,11 @@ export function StudentView({
               color: countdown ? '#f59e0b' : gameComplete ? '#059669' : '#1f2937'
             }}>
               {countdown 
-                ? `Next Round: ${countdown.timeRemaining}s`
+                ? `Round ${countdown.nextRound} starting in ${countdown.timeRemaining}s`
                 : gameComplete
                   ? '🎉 Game Complete!'
                   : roundActive 
-                    ? `${timer}s` 
+                    ? `Round ${currentRound} ending in ${timer}s` 
                     : 'Calculating results...'}
             </div>
           </div>
