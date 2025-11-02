@@ -63,7 +63,8 @@ export function StudentPage() {
       setRoundInfo(payload);
       setRoundActive(true);
       setHasSubmitted(false);
-      setTimer(payload.roundTime);
+      // Use currentTimer if provided (for reconnection), otherwise use full roundTime
+      setTimer(payload.currentTimer !== undefined ? payload.currentTimer : payload.roundTime);
       setCountdown(null); // Clear countdown when round starts
     };
     const handleRoundResults = payload => {

@@ -64,7 +64,12 @@ export function createGameManager(io) {
       timers: {
         round: null,
         reveal: null,
-        countdown: null
+        countdown: null,
+        countdownInterval: null
+      },
+      timestamps: {
+        roundStartTime: null,
+        countdownStartTime: null
       }
     };
 
@@ -152,8 +157,13 @@ export function createGameManager(io) {
       
       const session = ensureSession(code);
       
-      // Prevent students from joining if game is already running
-      if (role !== 'instructor' && session.status === STATUS.RUNNING) {
+      // Check if this is a returning player
+      const existingPlayer = Array.from(session.players.values()).find(
+        p => p.name === playerName && p.role === role
+      );
+      
+      // Prevent NEW students from joining if game is already running
+      if (role !== 'instructor' && !existingPlayer && session.status === STATUS.RUNNING) {
         throw new Error('GAME_ALREADY_STARTED');
       }
       
@@ -165,6 +175,56 @@ export function createGameManager(io) {
         config: session.config,
         currentRound: session.currentRound
       });
+      
+      // If student is reconnecting to an active round, send current round state
+      if (role !== 'instructor' && session.status === STATUS.RUNNING && session.currentRound > 0) {
+        const player = session.players.get(socket.id);
+        if (player && player.pondId) {
+          const pond = session.ponds.get(player.pondId);
+          
+          // Calculate remaining time
+          let remainingTime = 0;
+          let isCountdown = false;
+          
+          if (session.timestamps.countdownStartTime) {
+            // In countdown phase
+            const elapsed = Math.floor((Date.now() - session.timestamps.countdownStartTime) / 1000);
+            remainingTime = Math.max(0, session.config.countdownTime - elapsed);
+            isCountdown = true;
+          } else if (session.timestamps.roundStartTime) {
+            // In active round
+            const elapsed = Math.floor((Date.now() - session.timestamps.roundStartTime) / 1000);
+            remainingTime = Math.max(0, session.config.roundTime - elapsed);
+          }
+          
+          // Send round state
+          socket.emit('roundStarted', {
+            round: session.currentRound,
+            roundTime: session.config.roundTime,
+            remainingFish: pond?.remainingFish || 0,
+            pondId: player.pondId,
+            currentTimer: remainingTime
+          });
+          
+          // Send countdown if applicable
+          if (isCountdown && remainingTime > 0) {
+            socket.emit('roundCountdown', {
+              timeRemaining: remainingTime,
+              nextRound: session.currentRound + 1
+            });
+          }
+          
+          // Send latest results if available
+          if (player.history && player.history.length > 0) {
+            const latestResult = player.history[player.history.length - 1];
+            socket.emit('roundResults', {
+              ...latestResult,
+              history: player.history
+            });
+          }
+        }
+      }
+      
       broadcastSession(session);
       console.log(`✅ ${playerName} (${role}) joined session ${code}`);
     } catch (err) {
@@ -266,6 +326,10 @@ export function createGameManager(io) {
     }
     session.currentRound += 1;
     session.submissions.clear();
+    
+    // Track when this round started
+    session.timestamps.roundStartTime = Date.now();
+    session.timestamps.countdownStartTime = null;
     
     // Broadcast round start to all players with their pond info
     session.players.forEach(player => {
@@ -507,6 +571,10 @@ export function createGameManager(io) {
   function startCountdown(session) {
     const countdownTime = session.config.countdownTime;
     let timeRemaining = countdownTime;
+    
+    // Track when countdown started
+    session.timestamps.countdownStartTime = Date.now();
+    session.timestamps.roundStartTime = null;
     
     // Clear any existing countdown interval
     if (session.timers.countdownInterval) {
