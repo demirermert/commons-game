@@ -153,11 +153,13 @@ export function StudentPage() {
           <img 
             src="/course-logo.png" 
             alt="Course Logo"
+            className="course-logo"
             style={{ 
               position: 'absolute',
               top: '0.5rem',
               left: '0.5rem',
               width: '140px',
+              maxWidth: '25vw',
               height: 'auto',
               opacity: 0.9
             }}
@@ -167,11 +169,13 @@ export function StudentPage() {
           <img 
             src="/sloan-logo.png" 
             alt="MIT Sloan School of Management"
+            className="sloan-logo"
             style={{ 
               position: 'absolute',
-              top: '1.5rem',
+              top: '0.5rem',
               right: '0.5rem',
               width: '140px',
+              maxWidth: '25vw',
               height: 'auto',
               opacity: 0.9
             }}
@@ -180,13 +184,15 @@ export function StudentPage() {
           {/* Header */}
           <div style={{ 
             textAlign: 'center',
-            marginTop: '4rem',
+            marginTop: 'clamp(5rem, 15vw, 4rem)',
             marginBottom: '2rem',
             paddingBottom: '1.5rem',
+            paddingLeft: '1rem',
+            paddingRight: '1rem',
             borderBottom: '2px solid #e5e7eb'
           }}>
             <h1 style={{ 
-              fontSize: '1.5rem', 
+              fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', 
               fontWeight: 700,
               color: '#1f2937',
               marginBottom: '0.5rem',
@@ -195,7 +201,7 @@ export function StudentPage() {
               Welcome to 15.010 Commons Game
             </h1>
             <p style={{ 
-              fontSize: '1rem',
+              fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
               color: '#6b7280',
               margin: 0
             }}>
