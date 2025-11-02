@@ -122,12 +122,12 @@ export function StudentView({
             border: countdown ? '2px solid #f59e0b' : gameComplete ? '2px solid #10b981' : '2px solid rgba(0, 0, 0, 0.1)'
           }}>
             <div style={{
-              fontSize: '1.75rem',
+              fontSize: countdown ? '1.75rem' : gameComplete ? '1.75rem' : roundActive ? '1.75rem' : '1.25rem',
               fontWeight: 'bold',
               color: countdown ? '#f59e0b' : gameComplete ? '#059669' : '#1f2937'
             }}>
               {countdown 
-                ? `Round ${countdown.nextRound} starting in ${countdown.timeRemaining}s`
+                ? `Round ${countdown.nextRound} starts in ${countdown.timeRemaining}s`
                 : gameComplete
                   ? '🎉 Game Complete!'
                   : roundActive 
