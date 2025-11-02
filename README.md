@@ -82,4 +82,18 @@ To enable auto-submission with 5 students:
 npm run automate -- -a 5
 ```
 
+To test the online/production version:
+```bash
+npm run automate -- -o
+```
+
+To test online with auto-submission and 3 students:
+```bash
+npm run automate -- -a 3 -o
+```
+
+**Flags:**
+- `-a` or `--auto`: Enable automatic fish submission (optionally followed by number of students)
+- `-o` or `--online`: Test against production URLs (https://commons-game.vercel.app)
+
 

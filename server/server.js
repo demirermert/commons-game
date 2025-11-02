@@ -9,13 +9,31 @@ const allowedOriginEnv = process.env.ALLOWED_ORIGINS;
 const allowedOrigins = allowedOriginEnv
   ? allowedOriginEnv.split(',').map(origin => origin.trim()).filter(Boolean)
   : ['*'];
+
+// CORS configuration for both HTTP and WebSocket
 const corsConfig = allowedOrigins.includes('*')
-  ? { origin: '*', methods: ['GET', 'POST'] }
-  : { origin: allowedOrigins, methods: ['GET', 'POST'] };
+  ? { 
+      origin: '*', 
+      methods: ['GET', 'POST'],
+      credentials: true
+    }
+  : { 
+      origin: allowedOrigins, 
+      methods: ['GET', 'POST'],
+      credentials: true
+    };
 
 const app = express();
 const server = http.createServer(app);
-const io = new SocketIOServer(server, { cors: corsConfig });
+const io = new SocketIOServer(server, { 
+  cors: {
+    origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true,
+    allowedHeaders: ['*']
+  },
+  transports: ['websocket', 'polling']
+});
 
 app.use(cors(corsConfig));
 app.use(express.json());

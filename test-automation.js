@@ -1,11 +1,13 @@
 import puppeteer from 'puppeteer';
 
-const INSTRUCTOR_URL = 'http://localhost:3001/instructor';
-const STUDENT_URL = 'http://localhost:3001';
+// Default URLs (local)
+let INSTRUCTOR_URL = 'http://localhost:3001/instructor';
+let STUDENT_URL = 'http://localhost:3001';
 
 // Parse command line arguments
 let NUM_STUDENTS = 5; // Default number of students
 let AUTO_SUBMIT = false;
+let USE_ONLINE = false;
 
 // Check for flags
 for (let i = 2; i < process.argv.length; i++) {
@@ -17,10 +19,14 @@ for (let i = 2; i < process.argv.length; i++) {
       NUM_STUDENTS = parseInt(process.argv[i + 1], 10);
       i++; // Skip the next argument since we used it
     }
+  } else if (arg === '-o' || arg === '--online') {
+    USE_ONLINE = true;
+    INSTRUCTOR_URL = 'https://commons-game.vercel.app/instructor';
+    STUDENT_URL = 'https://commons-game.vercel.app';
   }
 }
 
-console.log(`Configuration: ${NUM_STUDENTS} students, Auto-submit: ${AUTO_SUBMIT}`);
+console.log(`Configuration: ${NUM_STUDENTS} students, Auto-submit: ${AUTO_SUBMIT}, Online: ${USE_ONLINE}`);
 
 async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -37,6 +43,24 @@ async function setupInstructor(browser) {
   let instructorPage;
   try {
     console.log('🎓 Setting up instructor...');
+    
+    // If online mode, wake up the backend first
+    if (USE_ONLINE) {
+      console.log('☁️  Waking up backend server (this may take 30-60 seconds on first request)...');
+      try {
+        const wakeUpStart = Date.now();
+        const response = await fetch('https://commons-game-server.onrender.com/health', {
+          signal: AbortSignal.timeout(60000) // 60 second timeout
+        });
+        const data = await response.json();
+        const wakeUpTime = ((Date.now() - wakeUpStart) / 1000).toFixed(1);
+        console.log(`✅ Backend is awake (took ${wakeUpTime}s):`, data);
+      } catch (err) {
+        console.log('⚠️  Backend wake-up check failed:', err.message);
+        console.log('Continuing anyway...');
+      }
+    }
+    
     instructorPage = await browser.newPage();
     
     // Set up error handlers for the page
@@ -49,15 +73,16 @@ async function setupInstructor(browser) {
     });
     
     console.log(`🔗 Navigating to ${INSTRUCTOR_URL}...`);
+    const timeout = USE_ONLINE ? 30000 : 10000; // Longer timeout for online
     await instructorPage.goto(INSTRUCTOR_URL, { 
       waitUntil: 'domcontentloaded',
-      timeout: 10000 
+      timeout 
     }).catch(err => {
       throw new Error(`Failed to navigate to instructor page: ${err.message}`);
     });
     
-    // Wait a bit for React to render
-    await delay(1000);
+    // Wait a bit for React to render (longer for online)
+    await delay(USE_ONLINE ? 3000 : 1000);
     
     console.log('📝 Looking for "Create session" button...');
     
