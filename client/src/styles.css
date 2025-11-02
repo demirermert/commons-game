@@ -285,3 +285,15 @@ button.primary:disabled {
     padding: 0.75rem !important;
   }
 }
+
+/* Pulse animation for fish input box */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 12px 24px rgba(245, 158, 11, 0.5);
+  }
+}

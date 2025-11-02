@@ -80,9 +80,11 @@ export function StudentPage() {
       setCountdown(payload);
     };
     const handleSessionComplete = payload => {
+      console.log('🎉 Received sessionComplete event:', payload);
       setRoundActive(false);
       setCountdown(null); // Clear countdown when session ends
       setGameComplete(true);
+      console.log('✅ Game complete state set to true');
     };
     const handleError = message => {
       setErrorMessage(message);

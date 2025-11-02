@@ -70,7 +70,9 @@ export function createGameManager(io) {
       timestamps: {
         roundStartTime: null,
         countdownStartTime: null
-      }
+      },
+      isFinalizingRound: false,
+      isFinalized: false
     };
 
     sessions.set(code, session);
@@ -628,6 +630,14 @@ export function createGameManager(io) {
   }
 
   function finalizeSession(session) {
+    // Guard against multiple calls
+    if (session.isFinalized) {
+      console.log(`⚠️  Session ${session.code} already finalized, skipping duplicate call`);
+      return;
+    }
+    session.isFinalized = true;
+    
+    console.log(`🏁 Finalizing session ${session.code}...`);
     clearTimers(session);
     session.status = STATUS.COMPLETE;
     
@@ -649,10 +659,12 @@ export function createGameManager(io) {
       }
     });
     
+    console.log(`📢 Emitting sessionComplete to session ${session.code}`);
     io.to(session.code).emit('sessionComplete', {
       rounds: session.roundResults
     });
     broadcastSession(session);
+    console.log(`✅ Session ${session.code} finalized successfully`);
   }
 
   function clearTimers(session) {

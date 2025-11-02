@@ -261,10 +261,16 @@ export function StudentView({
                 disabled={!roundActive || hasSubmitted}
                 placeholder={`0 to ${maxCatch}`}
                 style={{ 
-                  width: '150px',
-                  padding: '0.75rem',
-                  fontSize: '1.25rem',
-                  textAlign: 'center'
+                  width: '220px',
+                  maxWidth: '90%',
+                  padding: '1.25rem 1rem',
+                  fontSize: 'clamp(2rem, 6vw, 2.5rem)',
+                  textAlign: 'center',
+                  border: '3px solid #2563eb',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                  transition: 'all 0.2s ease'
                 }}
               />
               {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
