@@ -100,7 +100,10 @@ export function createGameManager(io) {
 
   function ensureSession(code) {
     const session = sessions.get(code);
-    if (!session) throw new Error('Session not found');
+    if (!session) {
+      console.error(`❌ Session not found: "${code}". Available sessions:`, Array.from(sessions.keys()));
+      throw new Error('Session not found');
+    }
     return session;
   }
 
@@ -135,7 +138,18 @@ export function createGameManager(io) {
 
   function handleJoin(socket, { sessionCode, playerName, role }) {
     try {
-      const code = sessionCode?.trim().toUpperCase();
+      console.log(`Join attempt - Socket: ${socket.id}, Code: "${sessionCode}", Name: "${playerName}", Role: "${role}"`);
+      
+      if (!sessionCode) {
+        throw new Error('Session code is required');
+      }
+      
+      const code = sessionCode.trim().toUpperCase();
+      
+      if (!code || code.length === 0) {
+        throw new Error('Session code cannot be empty');
+      }
+      
       const session = ensureSession(code);
       registerPlayer(session, socket, { playerName, role });
       socket.emit('joinedSession', {
@@ -146,8 +160,9 @@ export function createGameManager(io) {
         currentRound: session.currentRound
       });
       broadcastSession(session);
-      console.log(`${playerName} joined session ${code}`);
+      console.log(`✅ ${playerName} (${role}) joined session ${code}`);
     } catch (err) {
+      console.error(`❌ Join failed - Socket: ${socket.id}, Error: ${err.message}`);
       socket.emit('errorMessage', err.message);
     }
   }
@@ -295,6 +310,12 @@ export function createGameManager(io) {
 
   function handleFishSubmission(socket, { sessionCode, fishCount }) {
     try {
+      console.log(`Submission attempt - Socket: ${socket.id}, Code: "${sessionCode}", Fish: ${fishCount}`);
+      
+      if (!sessionCode) {
+        throw new Error('Session code is required');
+      }
+      
       const session = ensureSession(sessionCode);
       if (session.status !== STATUS.RUNNING) {
         throw new Error('Session not running');
@@ -311,8 +332,10 @@ export function createGameManager(io) {
         throw new Error(`Cannot catch more than ${session.config.maxCatchPerRound} fish`);
       }
       recordSubmission(session, socket.id, numericFish, false);
+      console.log(`✅ ${player.name} submitted ${numericFish} fish`);
       concludeRoundIfReady(session);
     } catch (err) {
+      console.error(`❌ Submission failed - Socket: ${socket.id}, Error: ${err.message}`);
       socket.emit('errorMessage', err.message);
     }
   }
