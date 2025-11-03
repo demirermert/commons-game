@@ -64,9 +64,6 @@ async function setupInstructor(browser) {
     
     instructorPage = await browser.newPage();
     
-    // Bring to background to avoid stealing focus
-    await instructorPage.evaluate(() => {});
-    
     // Set up error handlers for the page
     instructorPage.on('pageerror', error => {
       console.log('⚠️  Page error:', error.message);
@@ -465,7 +462,9 @@ async function main() {
         '--disable-features=IsolateOrigins,site-per-process',
         '--disable-popup-blocking',
         '--no-first-run',
-        '--no-default-browser-check'
+        '--no-default-browser-check',
+        '--disable-backgrounding-occluded-windows', // Prevent tabs from stealing focus
+        '--disable-renderer-backgrounding' // Keep background tabs active
       ],
       defaultViewport: null,
       ignoreHTTPSErrors: true,
