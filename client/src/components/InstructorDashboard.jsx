@@ -4,6 +4,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 export function InstructorDashboard({
   instructorName,
   session,
+  joinInfo,
   canStart,
   startDisabledReason,
   onStart,
@@ -100,9 +101,9 @@ export function InstructorDashboard({
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h2>Instructor: {instructorName}</h2>
-          <p>Session code: <strong>{session?.code}</strong></p>
+          <p>Session code: <strong>{session?.code || joinInfo?.code || 'Loading...'}</strong></p>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-            <span className="status-tag">{session?.status?.toUpperCase()}</span>
+            <span className="status-tag">{session?.status?.toUpperCase() || 'LOBBY'}</span>
             {roundActive && roundTimer !== null && (
               <div style={{ 
                 padding: '0.5rem 1rem',

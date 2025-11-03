@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { writeFileSync } from 'fs';
 
 // Default URLs (local)
 let INSTRUCTOR_URL = 'http://localhost:3001/instructor';
@@ -162,6 +163,7 @@ async function setupInstructor(browser) {
     // Fallback: try to parse from text content
     let pageText = '';
     if (!sessionCode) {
+      console.log('⚠️  Code not found in strong tags, trying text content...');
       pageText = await instructorPage.evaluate(() => document.body.textContent).catch(() => '');
       
       // Look for "Session code: XXXX" pattern specifically
@@ -192,6 +194,11 @@ async function setupInstructor(browser) {
       // Take a screenshot for debugging
       await instructorPage.screenshot({ path: 'instructor-screenshot.png' });
       console.log('📸 Screenshot saved to instructor-screenshot.png');
+      
+      // Also save HTML for debugging
+      const html = await instructorPage.content().catch(() => '<error getting html>');
+      writeFileSync('instructor-debug.html', html);
+      console.log('📄 HTML saved to instructor-debug.html');
       
       throw new Error('Session code not found');
     }

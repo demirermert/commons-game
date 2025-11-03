@@ -234,6 +234,7 @@ export function InstructorPage() {
       <InstructorDashboard
         instructorName="Instructor"
         session={session}
+        joinInfo={joinInfo}
         canStart={canStart}
         startDisabledReason={startDisabledReason}
         onStart={handleStartSession}

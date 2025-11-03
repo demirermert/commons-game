@@ -29,6 +29,7 @@ export function StudentPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [countdown, setCountdown] = useState(null);
   const [gameComplete, setGameComplete] = useState(false);
+  const [pendingHistory, setPendingHistory] = useState(null); // Hold history until countdown
 
   // Handle URL parameters for student persistence
   useEffect(() => {
@@ -72,18 +73,29 @@ export function StudentPage() {
     };
     const handleRoundResults = payload => {
       setLatestResult(payload);
-      setHistory(payload.history || []);
+      // Don't update history yet - wait for countdown
+      setPendingHistory(payload.history || []);
       setHasSubmitted(true);
       setRoundActive(false);
     };
     const handleRoundCountdown = payload => {
       setCountdown(payload);
+      // Now update history when countdown starts
+      if (pendingHistory) {
+        setHistory(pendingHistory);
+        setPendingHistory(null);
+      }
     };
     const handleSessionComplete = payload => {
       console.log('🎉 Received sessionComplete event:', payload);
       setRoundActive(false);
       setCountdown(null); // Clear countdown when session ends
       setGameComplete(true);
+      // If there's pending history when game ends, update it now
+      if (pendingHistory) {
+        setHistory(pendingHistory);
+        setPendingHistory(null);
+      }
       console.log('✅ Game complete state set to true');
     };
     const handleError = message => {
@@ -206,13 +218,6 @@ export function StudentPage() {
             }}>
               Welcome to 15.010 Commons Game
             </h1>
-            <p style={{ 
-              fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
-              color: '#6b7280',
-              margin: 0
-            }}>
-              Economic Analysis of Business Decisions
-            </p>
           </div>
 
           <form onSubmit={handleJoinSession} style={{ display: 'grid', gap: '1rem' }}>
