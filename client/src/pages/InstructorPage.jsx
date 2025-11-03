@@ -65,6 +65,25 @@ export function InstructorPage() {
       setCountdown(null);
       setRoundActive(false);
       setRoundTimer(null);
+      
+      // Update leaderboard with final round results
+      if (payload.rounds && payload.rounds.length > 0) {
+        const finalRound = payload.rounds[payload.rounds.length - 1];
+        setLeaderboardData(prev => {
+          const next = new Map(prev);
+          finalRound.results.forEach(entry => {
+            const current = next.get(entry.socketId) || {
+              socketId: entry.socketId,
+              name: entry.name || entry.socketId,
+              totalFish: 0
+            };
+            current.name = entry.name || current.name;
+            current.totalFish = entry.totalFish;
+            next.set(entry.socketId, current);
+          });
+          return next;
+        });
+      }
     };
     const handleError = message => {
       setErrorMessage(message);
