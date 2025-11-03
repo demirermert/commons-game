@@ -380,6 +380,12 @@ export function createGameManager(io) {
           remainingFish: pond?.remainingFish || 0,
           pondId: player.pondId
         });
+      } else if (player.role === 'instructor') {
+        // Send roundStarted to instructor too so they can see the timer
+        io.to(player.socketId).emit('roundStarted', {
+          round: session.currentRound,
+          roundTime: session.config.roundTime
+        });
       }
     });
     
@@ -688,7 +694,7 @@ export function createGameManager(io) {
     io.to(session.code).emit('sessionComplete', {
       rounds: session.roundResults
     });
-    broadcastSession(session);
+    broadcastSession(session, true); // force=true to guarantee delivery of final status
     console.log(`✅ Session ${session.code} finalized successfully`);
   }
 

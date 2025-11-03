@@ -31,17 +31,7 @@ export function InstructorPage() {
       setErrorMessage('');
     };
     const handleSessionUpdate = payload => {
-      setSession(prevSession => {
-        // If the round number increased, clear the countdown and start round timer
-        if (prevSession && payload.currentRound > prevSession.currentRound) {
-          setCountdown(null);
-          if (payload.status === 'running') {
-            setRoundActive(true);
-            setRoundTimer(payload.config?.roundTime || 15);
-          }
-        }
-        return payload;
-      });
+      setSession(payload);
     };
     const handleRoundSummary = payload => {
       setLatestRoundSummary(payload);
@@ -62,6 +52,11 @@ export function InstructorPage() {
         return next;
       });
     };
+    const handleRoundStarted = payload => {
+      setRoundActive(true);
+      setRoundTimer(payload.roundTime);
+      setCountdown(null);
+    };
     const handleRoundCountdown = payload => {
       setCountdown(payload);
     };
@@ -77,6 +72,7 @@ export function InstructorPage() {
 
     socket.on('joinedSession', handleJoinedSession);
     socket.on('sessionUpdate', handleSessionUpdate);
+    socket.on('roundStarted', handleRoundStarted);
     socket.on('roundSummary', handleRoundSummary);
     socket.on('roundCountdown', handleRoundCountdown);
     socket.on('sessionComplete', handleSessionComplete);
@@ -85,6 +81,7 @@ export function InstructorPage() {
     return () => {
       socket.off('joinedSession', handleJoinedSession);
       socket.off('sessionUpdate', handleSessionUpdate);
+      socket.off('roundStarted', handleRoundStarted);
       socket.off('roundSummary', handleRoundSummary);
       socket.off('roundCountdown', handleRoundCountdown);
       socket.off('sessionComplete', handleSessionComplete);
@@ -94,12 +91,12 @@ export function InstructorPage() {
 
   // Timer effect for round countdown
   useEffect(() => {
-    if (!roundActive || roundTimer === null) return;
+    if (!roundActive || roundTimer === null || roundTimer <= 0) return;
     const interval = setInterval(() => {
       setRoundTimer(prev => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [roundActive, session?.currentRound]);
+  }, [roundActive, roundTimer]);
 
   const leaderboard = useMemo(() => {
     return Array.from(leaderboardData.values())

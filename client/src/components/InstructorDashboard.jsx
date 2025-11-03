@@ -104,6 +104,19 @@ export function InstructorDashboard({
           <p>Session code: <strong>{session?.code || joinInfo?.code || 'Loading...'}</strong></p>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
             <span className="status-tag">{session?.status?.toUpperCase() || 'LOBBY'}</span>
+            {(session?.status === 'running' || session?.status === 'active') && (
+              <div style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#f0fdf4',
+                color: '#15803d',
+                border: '2px solid #22c55e',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '1.1rem'
+              }}>
+                📊 Round {session?.currentRound || 0} of {session?.config?.rounds || 0}
+              </div>
+            )}
             {roundActive && roundTimer !== null && (
               <div style={{ 
                 padding: '0.5rem 1rem',

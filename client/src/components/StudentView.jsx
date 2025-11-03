@@ -243,57 +243,62 @@ export function StudentView({
         </div>
       ) : !gameComplete ? (
         <>
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-            <div style={{ textAlign: 'center' }}>
-              <label htmlFor="fish-input" style={{ fontSize: '1.5rem', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
-                How many fish to catch?
-              </label>
-              <input
-                id="fish-input"
-                type="number"
-                step="1"
-                min="0"
-                max={maxCatch}
-                value={fishCount}
-                onChange={event => setFishCount(event.target.value)}
-                disabled={!roundActive || hasSubmitted}
-                placeholder={`0 to ${maxCatch}`}
-                style={{ 
-                  width: '220px',
-                  maxWidth: '90%',
-                  padding: '1.25rem 1rem',
-                  fontSize: 'clamp(2rem, 6vw, 2.5rem)',
-                  textAlign: 'center',
-                  border: '3px solid #2563eb',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                  transition: 'all 0.2s ease'
-                }}
-              />
-              {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
-            </div>
-            <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
-              {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit'}
-            </button>
-          </form>
+          {/* Only show input form when NOT in countdown (hide during 10s break) */}
+          {!countdown && (
+            <>
+              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <label htmlFor="fish-input" style={{ fontSize: '1.5rem', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
+                    How many fish to catch?
+                  </label>
+                  <input
+                    id="fish-input"
+                    type="number"
+                    step="1"
+                    min="0"
+                    max={maxCatch}
+                    value={fishCount}
+                    onChange={event => setFishCount(event.target.value)}
+                    disabled={!roundActive || hasSubmitted}
+                    placeholder={`0 to ${maxCatch}`}
+                    style={{ 
+                      width: '220px',
+                      maxWidth: '90%',
+                      padding: '1.25rem 1rem',
+                      fontSize: 'clamp(2rem, 6vw, 2.5rem)',
+                      textAlign: 'center',
+                      border: '3px solid #2563eb',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  />
+                  {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
+                </div>
+                <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
+                  {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit'}
+                </button>
+              </form>
 
-          {hasSubmitted && roundActive && (
-            <div style={{ 
-              backgroundColor: '#d1fae5', 
-              border: '2px solid #059669', 
-              borderRadius: '8px', 
-              padding: '1rem', 
-              marginTop: '1rem',
-              textAlign: 'center'
-            }}>
-              <p style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
-                ✓ Your decision has been submitted!
-              </p>
-              <p style={{ color: '#047857', margin: '0.5rem 0 0 0' }}>
-                Waiting for other players to submit their decisions...
-              </p>
-            </div>
+              {hasSubmitted && roundActive && (
+                <div style={{ 
+                  backgroundColor: '#d1fae5', 
+                  border: '2px solid #059669', 
+                  borderRadius: '8px', 
+                  padding: '1rem', 
+                  marginTop: '1rem',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
+                    ✓ Your decision has been submitted!
+                  </p>
+                  <p style={{ color: '#047857', margin: '0.5rem 0 0 0' }}>
+                    Waiting for other players to submit their decisions...
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </>
       ) : null}
