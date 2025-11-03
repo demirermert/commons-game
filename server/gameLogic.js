@@ -80,7 +80,22 @@ export function createGameManager(io) {
     return { code, config };
   }
 
-  function broadcastSession(session) {
+  // Throttle broadcast to prevent flooding with too many updates
+  let lastBroadcast = new Map();
+  const BROADCAST_THROTTLE_MS = 50; // Min 50ms between broadcasts for same session
+  
+  function broadcastSession(session, force = false) {
+    const now = Date.now();
+    const lastTime = lastBroadcast.get(session.code) || 0;
+    
+    // Throttle broadcasts unless forced
+    if (!force && (now - lastTime) < BROADCAST_THROTTLE_MS) {
+      return;
+    }
+    
+    lastBroadcast.set(session.code, now);
+    
+    // Optimize payload - only send necessary data
     const payload = {
       code: session.code,
       status: session.status,
@@ -93,16 +108,18 @@ export function createGameManager(io) {
         connected: player.connected,
         totalFish: player.totalFish,
         pondId: player.pondId || null,
-        history: player.history || [] // Include history for instructor dashboard
+        history: player.role === 'instructor' ? player.history : undefined // Only send history to instructor
       })),
       ponds: Array.from(session.ponds.entries()).map(([pondId, pond]) => ({
         id: pondId,
         remainingFish: pond.remainingFish,
         players: pond.playerIds
       })),
-      roundResults: session.roundResults // Add round results for aggregate statistics
+      roundResults: session.roundResults
     };
-    io.to(session.code).emit('sessionUpdate', payload);
+    
+    // Use volatile to skip slow clients rather than backing up
+    io.volatile.to(session.code).emit('sessionUpdate', payload);
   }
 
   function ensureSession(code) {
@@ -452,6 +469,9 @@ export function createGameManager(io) {
     const roundNumber = session.currentRound;
     const roundResults = [];
     
+    // Batch all emissions to improve performance with many students
+    const emissionQueue = [];
+    
     // Process each pond separately
     session.ponds.forEach((pond, pondId) => {
       const pondPlayers = pond.playerIds.map(id => session.players.get(id)).filter(p => p);
@@ -524,24 +544,28 @@ export function createGameManager(io) {
       pond.remainingFish = Math.min(pond.remainingFish * 2, maxFish);
       const fishAfterDoubling = pond.remainingFish;
       
-      // Update history with remaining fish after doubling AND send updated results to students
+      // Update history with remaining fish after doubling AND queue emissions
       pondPlayers.forEach(player => {
         if (player.history.length > 0) {
           player.history[player.history.length - 1].remainingFish = fishAfterDoubling;
           player.history[player.history.length - 1].fishBeforeDoubling = fishBeforeDoubling;
           player.history[player.history.length - 1].fishAfterDoubling = fishAfterDoubling;
           
-          // Re-emit roundResults with the doubling information
-          io.to(player.socketId).emit('roundResults', {
-            round: roundNumber,
-            requested: player.history[player.history.length - 1].requested,
-            caught: player.history[player.history.length - 1].caught,
-            totalFish: player.totalFish,
-            history: player.history,
-            pondId: pondId,
-            pondTotalCaught: totalCaught,
-            fishBeforeDoubling: fishBeforeDoubling,
-            fishAfterDoubling: fishAfterDoubling
+          // Queue emission instead of emitting immediately
+          emissionQueue.push({
+            socketId: player.socketId,
+            event: 'roundResults',
+            data: {
+              round: roundNumber,
+              requested: player.history[player.history.length - 1].requested,
+              caught: player.history[player.history.length - 1].caught,
+              totalFish: player.totalFish,
+              history: player.history,
+              pondId: pondId,
+              pondTotalCaught: totalCaught,
+              fishBeforeDoubling: fishBeforeDoubling,
+              fishAfterDoubling: fishAfterDoubling
+            }
           });
         }
       });
@@ -554,13 +578,18 @@ export function createGameManager(io) {
       results: roundResults
     });
 
+    // Batch emit all queued messages (more efficient than individual emits)
+    emissionQueue.forEach(({ socketId, event, data }) => {
+      io.to(socketId).emit(event, data);
+    });
+
     // Broadcast round summary
     io.to(session.code).emit('roundSummary', {
       round: roundNumber,
       results: roundResults
     });
 
-    broadcastSession(session);
+    broadcastSession(session, true); // Force broadcast after round finalization
     
     // Check if this was the last round
     if (session.currentRound >= session.config.rounds) {

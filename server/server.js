@@ -25,6 +25,12 @@ const corsConfig = allowedOrigins.includes('*')
 
 const app = express();
 const server = http.createServer(app);
+
+// Optimize server for high load (60+ concurrent connections)
+server.maxHeadersCount = 0; // No limit on headers
+server.timeout = 120000; // 2 minutes timeout
+server.keepAliveTimeout = 65000; // Keep connections alive
+
 const io = new SocketIOServer(server, { 
   cors: {
     origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
@@ -32,7 +38,18 @@ const io = new SocketIOServer(server, {
     credentials: true,
     allowedHeaders: ['*']
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  // Performance optimizations for 60+ students
+  pingTimeout: 60000, // Wait 60s for ping response before disconnect
+  pingInterval: 25000, // Send ping every 25s
+  upgradeTimeout: 30000, // Give 30s for transport upgrade
+  maxHttpBufferSize: 1e6, // 1MB max message size
+  allowEIO3: true, // Support older clients if needed
+  connectTimeout: 45000, // 45s connection timeout
+  // Enable compression for large payloads
+  perMessageDeflate: {
+    threshold: 1024 // Compress messages > 1KB
+  }
 });
 
 app.use(cors(corsConfig));
@@ -55,24 +72,98 @@ app.post('/session', (req, res) => {
 });
 
 io.on('connection', socket => {
+  console.log(`✅ Client connected: ${socket.id} (Total: ${io.engine.clientsCount})`);
+  
+  // Rate limiting: track last action time for this socket
+  socket.data.lastAction = 0;
+  socket.data.actionCount = 0;
+  
+  const rateLimitCheck = (minInterval = 100) => {
+    const now = Date.now();
+    const timeSinceLastAction = now - socket.data.lastAction;
+    
+    if (timeSinceLastAction < minInterval) {
+      socket.data.actionCount = (socket.data.actionCount || 0) + 1;
+      if (socket.data.actionCount > 10) {
+        console.warn(`⚠️ Rate limit exceeded for ${socket.id}`);
+        return false;
+      }
+    } else {
+      socket.data.actionCount = 0;
+    }
+    
+    socket.data.lastAction = now;
+    return true;
+  };
+  
   socket.on('joinSession', payload => {
-    manager.handleJoin(socket, payload);
+    try {
+      if (!rateLimitCheck(500)) {
+        socket.emit('errorMessage', 'Too many requests. Please slow down.');
+        return;
+      }
+      manager.handleJoin(socket, payload);
+    } catch (err) {
+      console.error(`❌ Error in joinSession for ${socket.id}:`, err);
+      socket.emit('errorMessage', 'Failed to join session. Please try again.');
+    }
   });
 
   socket.on('startSession', ({ sessionCode }) => {
-    manager.handleStartSession(socket, sessionCode);
+    try {
+      if (!rateLimitCheck(1000)) {
+        socket.emit('errorMessage', 'Too many requests. Please slow down.');
+        return;
+      }
+      manager.handleStartSession(socket, sessionCode);
+    } catch (err) {
+      console.error(`❌ Error in startSession for ${socket.id}:`, err);
+      socket.emit('errorMessage', 'Failed to start session. Please try again.');
+    }
   });
 
   socket.on('submitFish', payload => {
-    manager.handleFishSubmission(socket, payload);
+    try {
+      if (!rateLimitCheck(200)) {
+        socket.emit('errorMessage', 'Too many requests. Please slow down.');
+        return;
+      }
+      manager.handleFishSubmission(socket, payload);
+    } catch (err) {
+      console.error(`❌ Error in submitFish for ${socket.id}:`, err);
+      socket.emit('errorMessage', 'Failed to submit. Please try again.');
+    }
   });
 
-  socket.on('disconnect', () => {
-    manager.handleDisconnect(socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ Client disconnected: ${socket.id} (Reason: ${reason}, Remaining: ${io.engine.clientsCount - 1})`);
+    try {
+      manager.handleDisconnect(socket.id);
+    } catch (err) {
+      console.error(`❌ Error in disconnect handler for ${socket.id}:`, err);
+    }
+  });
+  
+  socket.on('error', (error) => {
+    console.error(`❌ Socket error for ${socket.id}:`, error);
   });
 });
 
 server.listen(PORT, () => {
   console.log(`Tragedy of Commons server listening on port ${PORT}`);
+  console.log(`💪 Performance optimizations enabled for 60+ concurrent students`);
+  console.log(`📊 WebSocket: ping=${45000}ms, compression enabled`);
+  
+  // Monitor memory usage every 30 seconds
+  setInterval(() => {
+    const used = process.memoryUsage();
+    const connections = io.engine.clientsCount;
+    console.log(`📊 Stats: ${connections} connections | Memory: ${Math.round(used.heapUsed / 1024 / 1024)}MB / ${Math.round(used.heapTotal / 1024 / 1024)}MB`);
+    
+    // Warn if memory gets high
+    if (used.heapUsed / used.heapTotal > 0.9) {
+      console.warn(`⚠️ High memory usage: ${Math.round((used.heapUsed / used.heapTotal) * 100)}%`);
+    }
+  }, 30000);
 });
 
