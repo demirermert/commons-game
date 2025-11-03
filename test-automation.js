@@ -490,11 +490,15 @@ async function main() {
     
     // Setup students
     const studentPages = [];
-    console.log(`\n👥 Creating ${NUM_STUDENTS} student tabs (they will briefly come to foreground)...`);
+    const delayBetweenStudents = USE_ONLINE ? 500 : 100; // Longer delay for online to avoid connection limits
+    console.log(`\n👥 Creating ${NUM_STUDENTS} student tabs...`);
+    if (USE_ONLINE) {
+      console.log('⏱️  Using 500ms delay between students for online mode to avoid connection limits\n');
+    }
     for (let i = 1; i <= NUM_STUDENTS; i++) {
       const studentPage = await setupStudent(browser, i, sessionCode);
       studentPages.push(studentPage);
-      await delay(100); // Small delay between students
+      await delay(delayBetweenStudents);
     }
     
     console.log('\n✅ All students joined successfully!');
