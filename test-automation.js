@@ -465,7 +465,9 @@ async function main() {
         '--disable-features=IsolateOrigins,site-per-process',
         '--disable-popup-blocking',
         '--no-first-run',
-        '--no-default-browser-check'
+        '--no-default-browser-check',
+        '--max-connections-per-host=100', // Increase connection limit per host
+        '--socket-reuse-policy=0' // Reuse sockets aggressively
       ],
       defaultViewport: null,
       ignoreHTTPSErrors: true,
