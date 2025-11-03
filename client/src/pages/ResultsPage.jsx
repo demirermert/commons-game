@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { socket } from '../socket.js';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function ResultsPage() {
   const [session, setSession] = useState(null);
@@ -189,17 +188,31 @@ export function ResultsPage() {
         <section>
           <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>🏆 Leaderboard</h2>
           {leaderboard.length > 0 ? (
-            <div style={{ marginBottom: '2rem' }}>
-              <ResponsiveContainer width="100%" height={Math.max(300, leaderboard.length * 40)}>
-                <BarChart data={leaderboard} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={150} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="totalFish" fill="#10b981" name="Total Fish" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Total Fish</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((entry, index) => (
+                    <tr key={index} style={{ 
+                      backgroundColor: index === 0 ? '#fef3c7' : index === 1 ? '#e5e7eb' : index === 2 ? '#fed7aa' : 'transparent'
+                    }}>
+                      <td>
+                        <strong style={{ fontSize: '1.2rem' }}>
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                        </strong>
+                      </td>
+                      <td><strong>{entry.name}</strong></td>
+                      <td><strong>{entry.totalFish}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
             <p style={{ textAlign: 'center', color: '#6b7280' }}>
