@@ -636,7 +636,19 @@ async function main() {
         // If auto-submit is enabled, start auto-submitting for all students
         if (AUTO_SUBMIT) {
           console.log('\n🤖 Auto-submit mode enabled! Students will automatically submit decisions.');
-          const ROUNDS = 3; // Default number of rounds
+          
+          // Get the number of rounds from instructor page (from session config)
+          let ROUNDS = 5; // Default fallback
+          try {
+            ROUNDS = await instructorPage.evaluate(() => {
+              const roundText = document.body.textContent;
+              const match = roundText.match(/Round \d+ of (\d+)/);
+              return match ? parseInt(match[1]) : 5;
+            }).catch(() => 5);
+            console.log(`📊 Detected ${ROUNDS} rounds from session config`);
+          } catch (e) {
+            console.log(`⚠️  Could not detect rounds, using default: ${ROUNDS}`);
+          }
           
           // Start auto-submit for each student (in parallel)
           const autoSubmitPromises = studentPages.map((page, index) => {
