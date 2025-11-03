@@ -4,7 +4,7 @@ import { InstructorDashboard } from '../components/InstructorDashboard.jsx';
 
 const DEFAULT_CONFIG = {
   rounds: 5,
-  roundTime: 15,
+  roundTime: 30,
   initialFish: 20,
   maxFish: 40,
   maxCatchPerRound: 5,

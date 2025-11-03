@@ -1,6 +1,6 @@
 const DEFAULT_CONFIG = {
   rounds: 3,
-  roundTime: 15,
+  roundTime: 30,
   resultRevealTime: 2, // Brief pause before showing results
   countdownTime: 10, // Countdown between rounds
   initialFish: 20,
