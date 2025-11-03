@@ -138,6 +138,14 @@ export function StudentPage() {
       setErrorMessage('Enter a code');
       return;
     }
+    
+    // Check if socket is connected
+    if (!socket.connected) {
+      setErrorMessage('Not connected to server. Please refresh the page and try again.');
+      console.error('❌ Cannot join: Socket not connected');
+      return;
+    }
+    
     // If names are not provided, generate a random name
     let playerName;
     if (!firstName.trim() || !lastName.trim()) {
