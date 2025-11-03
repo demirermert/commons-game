@@ -221,6 +221,52 @@ async function setupInstructor(browser) {
   }
 }
 
+async function setupResultsPage(browser, sessionCode) {
+  let resultsPage;
+  try {
+    console.log('📊 Setting up Results page...');
+    resultsPage = await browser.newPage();
+    
+    const RESULTS_URL = USE_ONLINE ? 'https://commons-game.vercel.app/results' : 'http://localhost:3001/results';
+    await resultsPage.goto(RESULTS_URL, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 10000
+    });
+    
+    await delay(1000);
+    
+    // Enter session code
+    const codeInput = await resultsPage.$('#session-code');
+    if (codeInput) {
+      await codeInput.type(sessionCode);
+      console.log(`✅ Entered session code in results page`);
+    }
+    
+    // Click "View Results" button
+    const buttons = await resultsPage.$$('button');
+    for (const button of buttons) {
+      const text = await button.evaluate(el => el.textContent).catch(() => '');
+      if (text.toLowerCase().includes('view') && text.toLowerCase().includes('results')) {
+        await button.click();
+        console.log(`✅ Clicked View Results button`);
+        break;
+      }
+    }
+    
+    await delay(1500);
+    console.log(`✅ Results page ready`);
+    
+    return resultsPage;
+  } catch (error) {
+    console.error('❌ Error setting up Results page:', error.message);
+    if (resultsPage) {
+      await resultsPage.screenshot({ path: 'results-error.png' }).catch(() => {});
+    }
+    // Don't throw - results page is optional
+    return null;
+  }
+}
+
 async function setupStudent(browser, studentNum, sessionCode) {
   let studentPage;
   try {
@@ -510,6 +556,12 @@ async function main() {
     console.log('\n' + '='.repeat(50));
     console.log(`📋 SESSION CODE: ${sessionCode}`);
     console.log('='.repeat(50) + '\n');
+    
+    // Setup results page (will appear as second tab after instructor)
+    const resultsPage = await setupResultsPage(browser, sessionCode);
+    if (resultsPage) {
+      console.log('✅ Results page is ready - will show live updates!\n');
+    }
     
     // Setup students
     const studentPages = [];
