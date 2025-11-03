@@ -220,6 +220,7 @@ export function StudentView({
             
             <p><strong>The Rules:</strong></p>
             <ul style={{ paddingLeft: '1.5rem' }}>
+              <li><strong>Starting fish:</strong> Your pond starts with {initialFish} fish</li>
               <li>Each round, you can choose to catch 0 to {maxCatch} fish from your pond</li>
               <li>You share this pond with <strong>{playersPerPond ? (playersPerPond - 1) : 'other'}</strong> other player{playersPerPond && playersPerPond > 2 ? 's' : ''} (total of {playersPerPond || '4'} players per pond)</li>
               <li><strong>Fish allocation:</strong> If the total requested by all players is less than available fish, each player gets their requested amount proportionally. If total requested exceeds available fish, players get fish on a first-come basis until the pond is empty</li>
