@@ -218,11 +218,14 @@ async function setupInstructor(browser) {
   }
 }
 
-async function setupStudent(browser, studentNum, sessionCode, instructorPage) {
+async function setupStudent(browser, studentNum, sessionCode) {
   let studentPage;
   try {
     console.log(`👤 Setting up Student ${studentNum}...`);
     studentPage = await browser.newPage();
+    
+    // Don't bring to front - keep in background
+    // This prevents the automation from stealing focus
     
     // Set up error handlers
     studentPage.on('pageerror', error => {
@@ -238,12 +241,7 @@ async function setupStudent(browser, studentNum, sessionCode, instructorPage) {
       throw new Error(`Student ${studentNum}: Failed to navigate: ${err.message}`);
     });
     
-    // Immediately bring instructor page back to front to prevent focus stealing
-    if (instructorPage) {
-      await instructorPage.bringToFront().catch(() => {});
-    }
-    
-    await delay(200);
+    await delay(500);
     
     // Wait for the form to be ready
     try {
@@ -489,12 +487,11 @@ async function main() {
     
     // Setup students
     const studentPages = [];
-    console.log(`\n👥 Creating ${NUM_STUDENTS} student tabs...`);
-    console.log('💡 Tip: Instructor page will stay in focus while students join\n');
+    console.log(`\n👥 Creating ${NUM_STUDENTS} student tabs (they will briefly come to foreground)...`);
     for (let i = 1; i <= NUM_STUDENTS; i++) {
-      const studentPage = await setupStudent(browser, i, sessionCode, instructorPage);
+      const studentPage = await setupStudent(browser, i, sessionCode);
       studentPages.push(studentPage);
-      await delay(50); // Small delay between students
+      await delay(100); // Small delay between students
     }
     
     console.log('\n✅ All students joined successfully!');
