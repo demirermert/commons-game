@@ -147,6 +147,19 @@ export function createGameManager(io) {
       throw new Error('Name is required');
     }
     
+    // Allow observers to join without being counted as players
+    if (role === 'observer') {
+      const observer = {
+        socketId: socket.id,
+        sessionCode: session.code,
+        name: playerName,
+        role: 'observer',
+        connected: true
+      };
+      session.players.set(socket.id, observer);
+      return;
+    }
+    
     // Check if this player already exists (reconnection)
     const existingPlayer = Array.from(session.players.values()).find(
       p => p.name === playerName && p.role === (role === 'instructor' ? 'instructor' : 'student')
