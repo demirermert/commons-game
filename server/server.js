@@ -75,34 +75,8 @@ app.post('/session', (req, res) => {
 io.on('connection', socket => {
   console.log(`✅ Client connected: ${socket.id} (Total: ${io.engine.clientsCount})`);
   
-  // Rate limiting: track last action time for this socket
-  socket.data.lastAction = 0;
-  socket.data.actionCount = 0;
-  
-  const rateLimitCheck = (minInterval = 100) => {
-    const now = Date.now();
-    const timeSinceLastAction = now - socket.data.lastAction;
-    
-    if (timeSinceLastAction < minInterval) {
-      socket.data.actionCount = (socket.data.actionCount || 0) + 1;
-      if (socket.data.actionCount > 10) {
-        console.warn(`⚠️ Rate limit exceeded for ${socket.id}`);
-        return false;
-      }
-    } else {
-      socket.data.actionCount = 0;
-    }
-    
-    socket.data.lastAction = now;
-    return true;
-  };
-  
   socket.on('joinSession', payload => {
     try {
-      if (!rateLimitCheck(500)) {
-        socket.emit('errorMessage', 'Too many requests. Please slow down.');
-        return;
-      }
       manager.handleJoin(socket, payload);
     } catch (err) {
       console.error(`❌ Error in joinSession for ${socket.id}:`, err);
@@ -112,10 +86,6 @@ io.on('connection', socket => {
 
   socket.on('startSession', ({ sessionCode }) => {
     try {
-      if (!rateLimitCheck(1000)) {
-        socket.emit('errorMessage', 'Too many requests. Please slow down.');
-        return;
-      }
       manager.handleStartSession(socket, sessionCode);
     } catch (err) {
       console.error(`❌ Error in startSession for ${socket.id}:`, err);
@@ -125,10 +95,6 @@ io.on('connection', socket => {
 
   socket.on('submitFish', payload => {
     try {
-      if (!rateLimitCheck(200)) {
-        socket.emit('errorMessage', 'Too many requests. Please slow down.');
-        return;
-      }
       manager.handleFishSubmission(socket, payload);
     } catch (err) {
       console.error(`❌ Error in submitFish for ${socket.id}:`, err);
