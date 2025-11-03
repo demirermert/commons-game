@@ -63,6 +63,9 @@ async function setupInstructor(browser) {
     
     instructorPage = await browser.newPage();
     
+    // Bring to background to avoid stealing focus
+    await instructorPage.evaluate(() => {});
+    
     // Set up error handlers for the page
     instructorPage.on('pageerror', error => {
       console.log('⚠️  Page error:', error.message);
@@ -157,8 +160,9 @@ async function setupInstructor(browser) {
     }).catch(() => null);
     
     // Fallback: try to parse from text content
+    let pageText = '';
     if (!sessionCode) {
-      const pageText = await instructorPage.evaluate(() => document.body.textContent).catch(() => '');
+      pageText = await instructorPage.evaluate(() => document.body.textContent).catch(() => '');
       
       // Look for "Session code: XXXX" pattern specifically
       const codeMatch = pageText.match(/Session code:\s*([A-Z0-9]{4})\b/i);
@@ -215,6 +219,9 @@ async function setupStudent(browser, studentNum, sessionCode) {
   try {
     console.log(`👤 Setting up Student ${studentNum}...`);
     studentPage = await browser.newPage();
+    
+    // Don't bring to front - keep in background
+    // This prevents the automation from stealing focus
     
     // Set up error handlers
     studentPage.on('pageerror', error => {
@@ -422,7 +429,10 @@ async function main() {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-popup-blocking',
+        '--no-first-run',
+        '--no-default-browser-check'
       ],
       defaultViewport: null,
       ignoreHTTPSErrors: true,
@@ -445,6 +455,7 @@ async function main() {
     
     // Setup students
     const studentPages = [];
+    console.log(`\n👥 Creating ${NUM_STUDENTS} student tabs (they will briefly come to foreground)...`);
     for (let i = 1; i <= NUM_STUDENTS; i++) {
       const studentPage = await setupStudent(browser, i, sessionCode);
       studentPages.push(studentPage);

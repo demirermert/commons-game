@@ -17,7 +17,8 @@ export function StudentView({
   pondPlayers,
   initialFish,
   gameComplete,
-  pondPlayersResults
+  pondPlayersResults,
+  playersPerPond
 }) {
   const [fishCount, setFishCount] = useState('');
   const [error, setError] = useState('');
@@ -145,7 +146,7 @@ export function StudentView({
             borderRadius: '12px',
             marginBottom: '0'
           }}>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: textColor, lineHeight: 1 }}>
+            <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: textColor, lineHeight: 1 }}>
               {displayedFish}
             </div>
             <div style={{ fontSize: '0.875rem', color: textColor, marginTop: '0.25rem' }}>
@@ -220,15 +221,12 @@ export function StudentView({
             <p><strong>The Rules:</strong></p>
             <ul style={{ paddingLeft: '1.5rem' }}>
               <li>Each round, you can choose to catch 0 to {maxCatch} fish from your pond</li>
-              <li>You share this pond with other players in your group</li>
+              <li>You share this pond with <strong>{playersPerPond ? (playersPerPond - 1) : 'other'}</strong> other player{playersPerPond && playersPerPond > 2 ? 's' : ''} (total of {playersPerPond || '4'} players per pond)</li>
               <li><strong>Fish allocation:</strong> If the total requested by all players is less than available fish, each player gets their requested amount proportionally. If total requested exceeds available fish, players get fish on a first-come basis until the pond is empty</li>
               <li>After everyone makes their decision, the remaining fish in the pond will <strong>double</strong> (up to a maximum of {initialFish + 20})</li>
               <li>If all the fish are caught, the pond is empty and cannot recover</li>
               <li><strong>At the end of the game</strong>, any remaining fish in the pond will be <strong>split equally</strong> among all players in that pond</li>
             </ul>
-            
-            <p><strong>Strategy:</strong></p>
-            <p>Catching more fish now gives you immediate rewards, but leaving fish in the pond helps everyone in future rounds. The final split means leftover fish aren't wasted! Will you cooperate or compete?</p>
             
             <p style={{ 
               textAlign: 'center', 

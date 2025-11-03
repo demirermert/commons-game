@@ -514,16 +514,7 @@ export function createGameManager(io) {
           ...playerResult
         });
 
-        // Send individual result to student
-        io.to(player.socketId).emit('roundResults', {
-          round: roundNumber,
-          requested: requested,
-          caught: caught,
-          totalFish: player.totalFish,
-          history: player.history,
-          pondId: pondId,
-          pondTotalCaught: totalCaught
-        });
+        // Don't emit here - wait until after fish doubling calculation
       });
 
       // Update pond's remaining fish and double them (capped at maxFish)

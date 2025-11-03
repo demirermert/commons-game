@@ -308,6 +308,7 @@ export function StudentPage() {
         }
         initialFish={session?.config?.initialFish || 20}
         gameComplete={gameComplete}
+        playersPerPond={session?.config?.playersPerPond || 4}
         pondPlayersResults={
           gameComplete && (roundInfo?.pondId || latestResult?.pondId)
             ? session?.ponds?.find(p => p.id === (roundInfo?.pondId || latestResult?.pondId))?.players
