@@ -157,6 +157,10 @@ export function createGameManager(io) {
         connected: true
       };
       session.players.set(socket.id, observer);
+      // Don't return early - observers need to join the room too!
+      socket.join(session.code);
+      socket.data.sessionCode = session.code;
+      socket.data.role = 'observer';
       return;
     }
     

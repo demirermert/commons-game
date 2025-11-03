@@ -7,15 +7,19 @@ export function ResultsPage() {
   const [sessionCode, setSessionCode] = useState('');
   const [sessionCodeInput, setSessionCodeInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleJoinedSession = payload => {
       console.log('✅ Joined session as observer:', payload);
       setSessionCode(payload.code);
+      setIsLoading(true); // Wait for sessionUpdate to arrive
     };
 
     const handleSessionUpdate = payload => {
+      console.log('📊 Session update received:', payload);
       setSession(payload);
+      setIsLoading(false);
     };
 
     const handleError = message => {
@@ -40,13 +44,34 @@ export function ResultsPage() {
       setErrorMessage('Please enter a session code');
       return;
     }
+    
+    // Check if socket is connected
+    if (!socket.connected) {
+      setErrorMessage('Not connected to server. Please refresh the page and try again.');
+      console.error('❌ Cannot join: Socket not connected');
+      return;
+    }
 
+    console.log('🔌 Emitting joinSession as observer:', sessionCodeInput.toUpperCase());
     socket.emit('joinSession', {
       sessionCode: sessionCodeInput.toUpperCase(),
       playerName: 'Results Viewer',
       role: 'observer'
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="app-shell">
+        <div className="card">
+          <h1 style={{ textAlign: 'center' }}>📊 Loading Results...</h1>
+          <p style={{ textAlign: 'center', color: '#6b7280' }}>
+            Connecting to session {sessionCode}...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!session) {
     return (
