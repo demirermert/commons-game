@@ -347,6 +347,7 @@ async function setupStudent(browser, studentNum, sessionCode) {
       throw new Error(`Student ${studentNum}: Join button not found or not clickable`);
     }
     
+    console.log(`✅ Student ${studentNum}: Successfully joined session`);
     await delay(300);
     
     return studentPage;
@@ -512,22 +513,44 @@ async function main() {
     
     // Setup students
     const studentPages = [];
+    const MAX_OPEN_TABS = 31; // Keep under browser connection limit
     const delayBetweenStudents = USE_ONLINE ? 500 : 100; // Longer delay for online to avoid connection limits
     console.log(`\n👥 Creating ${NUM_STUDENTS} student tabs...`);
     if (USE_ONLINE) {
       console.log('⏱️  Using 500ms delay between students for online mode to avoid connection limits\n');
     }
+    if (NUM_STUDENTS > MAX_OPEN_TABS) {
+      console.log(`⚠️  Testing with ${NUM_STUDENTS} students - will close tabs after join to stay under connection limit\n`);
+    }
+    
     for (let i = 1; i <= NUM_STUDENTS; i++) {
       const studentPage = await setupStudent(browser, i, sessionCode);
       if (studentPage) {
         studentPages.push(studentPage);
+        
+        // If we have more students than the connection limit, close older tabs
+        // Keep only the last MAX_OPEN_TABS tabs open
+        if (NUM_STUDENTS > MAX_OPEN_TABS && studentPages.length > MAX_OPEN_TABS) {
+          const tabToClose = studentPages.shift(); // Remove and get the first (oldest) tab
+          const closedStudentNum = i - MAX_OPEN_TABS;
+          try {
+            await tabToClose.close();
+            console.log(`🗑️  Closed Student ${closedStudentNum} tab to free connection (joined successfully)`);
+          } catch (err) {
+            console.log(`⚠️  Failed to close Student ${closedStudentNum} tab:`, err.message);
+          }
+        }
       } else {
         console.log(`⚠️  Student ${i} failed to join (skipped)`);
       }
       await delay(delayBetweenStudents);
     }
     
-    console.log(`\n✅ ${studentPages.length} students joined successfully (${NUM_STUDENTS - studentPages.length} failed)!`);
+    const successfulJoins = NUM_STUDENTS - (NUM_STUDENTS > MAX_OPEN_TABS ? NUM_STUDENTS - studentPages.length : 0);
+    console.log(`\n✅ ${NUM_STUDENTS} students joined successfully!`);
+    if (NUM_STUDENTS > MAX_OPEN_TABS) {
+      console.log(`   (Keeping last ${studentPages.length} tabs open, others closed to avoid connection limits)`);
+    }
     
     // Wait a moment for the instructor dashboard to update with all players
     await delay(800);
