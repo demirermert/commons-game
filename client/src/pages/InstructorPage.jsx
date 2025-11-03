@@ -32,6 +32,23 @@ export function InstructorPage() {
     };
     const handleSessionUpdate = payload => {
       setSession(payload);
+      
+      // If game is complete, update leaderboard with final player totals (includes split fish)
+      if (payload.status === 'complete' && payload.players) {
+        setLeaderboardData(prev => {
+          const next = new Map();
+          payload.players.forEach(player => {
+            if (player.role === 'student') {
+              next.set(player.socketId, {
+                socketId: player.socketId,
+                name: player.name,
+                totalFish: player.totalFish
+              });
+            }
+          });
+          return next;
+        });
+      }
     };
     const handleRoundSummary = payload => {
       setLatestRoundSummary(payload);
