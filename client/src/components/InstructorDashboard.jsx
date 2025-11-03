@@ -356,7 +356,7 @@ export function InstructorDashboard({
                 </tr>
               </thead>
               <tbody>
-                {students.slice(0, 10).map(player => (
+                {students.map(player => (
                   <tr key={player.socketId}>
                     <td>{player.name}</td>
                     <td>

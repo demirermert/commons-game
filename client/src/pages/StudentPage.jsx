@@ -29,7 +29,6 @@ export function StudentPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [countdown, setCountdown] = useState(null);
   const [gameComplete, setGameComplete] = useState(false);
-  const [pendingHistory, setPendingHistory] = useState(null); // Hold history until countdown
 
   // Handle URL parameters for student persistence
   useEffect(() => {
@@ -73,29 +72,18 @@ export function StudentPage() {
     };
     const handleRoundResults = payload => {
       setLatestResult(payload);
-      // Don't update history yet - wait for countdown
-      setPendingHistory(payload.history || []);
+      setHistory(payload.history || []);
       setHasSubmitted(true);
       setRoundActive(false);
     };
     const handleRoundCountdown = payload => {
       setCountdown(payload);
-      // Now update history when countdown starts
-      if (pendingHistory) {
-        setHistory(pendingHistory);
-        setPendingHistory(null);
-      }
     };
     const handleSessionComplete = payload => {
       console.log('🎉 Received sessionComplete event:', payload);
       setRoundActive(false);
       setCountdown(null); // Clear countdown when session ends
       setGameComplete(true);
-      // If there's pending history when game ends, update it now
-      if (pendingHistory) {
-        setHistory(pendingHistory);
-        setPendingHistory(null);
-      }
       console.log('✅ Game complete state set to true');
     };
     const handleError = message => {
@@ -293,11 +281,26 @@ export function StudentPage() {
         timer={timer}
         maxCatch={session?.config?.maxCatchPerRound || 5}
         remainingFish={(() => {
-          // Get the current pond for this player
+          // Priority order for getting fish count:
+          // 1. Latest result (most accurate after round completion)
+          // 2. Session ponds (updated during gameplay)
+          // 3. Round info (initial value when round starts)
+          
           const myPondId = roundInfo?.pondId || latestResult?.pondId;
+          
+          // First check if we have fish count from latest result
+          if (latestResult?.fishAfterDoubling !== undefined) {
+            return latestResult.fishAfterDoubling;
+          }
+          
+          // Then check session ponds
           const myPond = session?.ponds?.find(p => p.id === myPondId);
-          // Use pond's current remainingFish from session (which is always up-to-date)
-          return myPond?.remainingFish || roundInfo?.remainingFish || 0;
+          if (myPond?.remainingFish !== undefined) {
+            return myPond.remainingFish;
+          }
+          
+          // Finally fall back to round info
+          return roundInfo?.remainingFish ?? 0;
         })()}
         onSubmitFish={handleSubmitFish}
         latestResult={latestResult}

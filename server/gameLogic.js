@@ -108,7 +108,7 @@ export function createGameManager(io) {
         connected: player.connected,
         totalFish: player.totalFish,
         pondId: player.pondId || null,
-        history: player.role === 'instructor' ? player.history : undefined // Only send history to instructor
+        history: player.history || [] // Include history for all players so instructor can see it
       })),
       ponds: Array.from(session.ponds.entries()).map(([pondId, pond]) => ({
         id: pondId,
@@ -118,8 +118,13 @@ export function createGameManager(io) {
       roundResults: session.roundResults
     };
     
-    // Use volatile to skip slow clients rather than backing up
-    io.volatile.to(session.code).emit('sessionUpdate', payload);
+    // Emit session update
+    // Use volatile for frequent updates, but not for forced updates (which are important)
+    if (force) {
+      io.to(session.code).emit('sessionUpdate', payload);
+    } else {
+      io.volatile.to(session.code).emit('sessionUpdate', payload);
+    }
   }
 
   function ensureSession(code) {
