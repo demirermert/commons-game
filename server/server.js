@@ -4,6 +4,7 @@ import cors from 'cors';
 import { Server as SocketIOServer } from 'socket.io';
 import { createGameManager } from './gameLogic.js';
 
+// Server configuration
 const PORT = process.env.PORT || 4001;
 const allowedOriginEnv = process.env.ALLOWED_ORIGINS;
 const allowedOrigins = allowedOriginEnv
