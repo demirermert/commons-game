@@ -9,6 +9,11 @@ export function ResultsPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    const handleJoinedSession = payload => {
+      console.log('✅ Joined session as observer:', payload);
+      setSessionCode(payload.code);
+    };
+
     const handleSessionUpdate = payload => {
       setSession(payload);
     };
@@ -17,10 +22,12 @@ export function ResultsPage() {
       setErrorMessage(message);
     };
 
+    socket.on('joinedSession', handleJoinedSession);
     socket.on('sessionUpdate', handleSessionUpdate);
     socket.on('errorMessage', handleError);
 
     return () => {
+      socket.off('joinedSession', handleJoinedSession);
       socket.off('sessionUpdate', handleSessionUpdate);
       socket.off('errorMessage', handleError);
     };
@@ -39,7 +46,6 @@ export function ResultsPage() {
       playerName: 'Results Viewer',
       role: 'observer'
     });
-    setSessionCode(sessionCodeInput.toUpperCase());
   };
 
   if (!session) {
