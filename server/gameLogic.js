@@ -215,7 +215,8 @@ export function createGameManager(io) {
       );
       
       // Prevent NEW students from joining if game is already running
-      if (role !== 'instructor' && !existingPlayer && session.status === STATUS.RUNNING) {
+      // But allow observers to join at any time
+      if (role !== 'instructor' && role !== 'observer' && !existingPlayer && session.status === STATUS.RUNNING) {
         throw new Error('GAME_ALREADY_STARTED');
       }
       
