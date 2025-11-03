@@ -246,12 +246,34 @@ async function setupStudent(browser, studentNum, sessionCode) {
     
     await delay(500);
     
-    // Wait for the form to be ready
-    try {
-      await studentPage.waitForSelector('#session-code', { timeout: 10000 });
-    } catch (e) {
-      console.log(`⚠️  Student ${studentNum}: Waiting for form elements...`);
-      await delay(2000); // Give it more time
+    // Wait for the form to be ready with better retry logic
+    let formReady = false;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (!formReady && attempts < maxAttempts) {
+      attempts++;
+      try {
+        await studentPage.waitForSelector('#session-code', { timeout: 10000 });
+        formReady = true;
+      } catch (e) {
+        console.log(`⚠️  Student ${studentNum}: Form not ready (attempt ${attempts}/${maxAttempts})...`);
+        if (attempts < maxAttempts) {
+          await delay(2000);
+          // Try refreshing the page
+          console.log(`🔄 Student ${studentNum}: Refreshing page...`);
+          await studentPage.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+          await delay(1000);
+        }
+      }
+    }
+    
+    if (!formReady) {
+      const screenshot = `student-${studentNum}-no-form.png`;
+      await studentPage.screenshot({ path: screenshot });
+      console.log(`📸 Screenshot saved to ${screenshot}`);
+      console.log(`⚠️  Student ${studentNum}: Skipping due to form load failure (likely connection limit)`);
+      return null; // Return null instead of throwing, so automation continues
     }
     
     // Find the first name input field
@@ -497,11 +519,15 @@ async function main() {
     }
     for (let i = 1; i <= NUM_STUDENTS; i++) {
       const studentPage = await setupStudent(browser, i, sessionCode);
-      studentPages.push(studentPage);
+      if (studentPage) {
+        studentPages.push(studentPage);
+      } else {
+        console.log(`⚠️  Student ${i} failed to join (skipped)`);
+      }
       await delay(delayBetweenStudents);
     }
     
-    console.log('\n✅ All students joined successfully!');
+    console.log(`\n✅ ${studentPages.length} students joined successfully (${NUM_STUDENTS - studentPages.length} failed)!`);
     
     // Wait a moment for the instructor dashboard to update with all players
     await delay(800);
