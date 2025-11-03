@@ -235,14 +235,24 @@ async function setupStudent(browser, studentNum, sessionCode) {
       console.log(`⚠️  Student ${studentNum} page error:`, error.message);
     });
     
+    // Longer timeout for many students
+    const timeout = 30000; // Increased to 30 seconds
     await studentPage.goto(STUDENT_URL, { 
       waitUntil: 'domcontentloaded',
-      timeout: 10000 
+      timeout
     }).catch(err => {
       throw new Error(`Student ${studentNum}: Failed to navigate: ${err.message}`);
     });
     
     await delay(500);
+    
+    // Wait for the form to be ready
+    try {
+      await studentPage.waitForSelector('#session-code', { timeout: 10000 });
+    } catch (e) {
+      console.log(`⚠️  Student ${studentNum}: Waiting for form elements...`);
+      await delay(2000); // Give it more time
+    }
     
     // Find the first name input field
     const firstNameInput = await studentPage.$('#first-name').catch(() => null);
@@ -278,23 +288,41 @@ async function setupStudent(browser, studentNum, sessionCode) {
     
     await delay(100);
     
-    // Look for "Join" button
-    const buttons = await studentPage.$$('button').catch(() => []);
+    // Look for "Join" button with retry
     let joined = false;
+    let retries = 3;
     
-    for (const button of buttons) {
-      const text = await button.evaluate(el => el.textContent).catch(() => '');
-      if (text.toLowerCase().includes('join')) {
-        await button.click();
-        joined = true;
-        console.log(`✅ Student ${studentNum}: Clicked Join Session`);
-        break;
+    while (!joined && retries > 0) {
+      const buttons = await studentPage.$$('button').catch(() => []);
+      
+      for (const button of buttons) {
+        const text = await button.evaluate(el => el.textContent).catch(() => '');
+        if (text.toLowerCase().includes('join')) {
+          // Check if button is visible and clickable
+          const isVisible = await button.evaluate(el => {
+            const rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+          }).catch(() => false);
+          
+          if (isVisible) {
+            await button.click();
+            joined = true;
+            console.log(`✅ Student ${studentNum}: Clicked Join Session`);
+            break;
+          }
+        }
+      }
+      
+      if (!joined) {
+        retries--;
+        console.log(`⚠️  Student ${studentNum}: Join button not clickable, retrying... (${retries} left)`);
+        await delay(1000);
       }
     }
     
     if (!joined) {
       await studentPage.screenshot({ path: `student-${studentNum}-error.png` });
-      throw new Error(`Student ${studentNum}: Join button not found`);
+      throw new Error(`Student ${studentNum}: Join button not found or not clickable`);
     }
     
     await delay(300);
@@ -369,8 +397,6 @@ async function autoSubmitForStudent(studentPage, studentNum, roundsToPlay) {
         
         return { success: true, value: input.value };
       }, randomFish);
-      
-      console.log(`   Input result:`, inputResult);
       
       await delay(500);
       

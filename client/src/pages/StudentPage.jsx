@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { socket } from '../socket.js';
 import { StudentView } from '../components/StudentView.jsx';
 
@@ -29,6 +29,9 @@ export function StudentPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [countdown, setCountdown] = useState(null);
   const [gameComplete, setGameComplete] = useState(false);
+  
+  // Use ref for pendingHistory to avoid recreating socket listeners
+  const pendingHistoryRef = useRef(null);
 
   // Handle URL parameters for student persistence
   useEffect(() => {
@@ -72,18 +75,29 @@ export function StudentPage() {
     };
     const handleRoundResults = payload => {
       setLatestResult(payload);
-      setHistory(payload.history || []);
+      // Store history but don't display yet - wait for countdown
+      pendingHistoryRef.current = payload.history || [];
       setHasSubmitted(true);
       setRoundActive(false);
     };
     const handleRoundCountdown = payload => {
       setCountdown(payload);
+      // Now update history when countdown starts (same time as "Previous Round Result" box)
+      if (pendingHistoryRef.current) {
+        setHistory(pendingHistoryRef.current);
+        pendingHistoryRef.current = null;
+      }
     };
     const handleSessionComplete = payload => {
       console.log('🎉 Received sessionComplete event:', payload);
       setRoundActive(false);
       setCountdown(null); // Clear countdown when session ends
       setGameComplete(true);
+      // If there's pending history when game ends, update it now
+      if (pendingHistoryRef.current) {
+        setHistory(pendingHistoryRef.current);
+        pendingHistoryRef.current = null;
+      }
       console.log('✅ Game complete state set to true');
     };
     const handleError = message => {
