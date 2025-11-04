@@ -83,8 +83,8 @@ export function StudentView({
         </div>
       </header>
 
-      {/* Previous Round Result - Show above pond visualization during countdown */}
-      {countdown && latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
+      {/* Previous Round Result - Show when results are available (not during active round) */}
+      {!roundActive && latestResult && latestResult.fishBeforeDoubling !== undefined && latestResult.fishAfterDoubling !== undefined && (
         <div style={{
           backgroundColor: '#dbeafe',
           border: '2px solid #3b82f6',
