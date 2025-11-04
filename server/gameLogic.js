@@ -259,16 +259,27 @@ export function createGameManager(io) {
           // Students with ponds get full info
           const pond = session.ponds.get(player.pondId);
           
-          // Send round state
-          socket.emit('roundStarted', {
-            round: session.currentRound,
-            roundTime: currentRoundTime,
-            remainingFish: pond?.remainingFish || 0,
-            pondId: player.pondId,
-            currentTimer: remainingTime
-          });
+          // Don't send timer updates if pond is depleted
+          if (!pond?.depleted) {
+            // Send round state
+            socket.emit('roundStarted', {
+              round: session.currentRound,
+              roundTime: currentRoundTime,
+              remainingFish: pond?.remainingFish || 0,
+              pondId: player.pondId,
+              currentTimer: remainingTime
+            });
+            
+            // Send countdown if applicable
+            if (isCountdown && remainingTime > 0) {
+              socket.emit('roundCountdown', {
+                timeRemaining: remainingTime,
+                nextRound: session.currentRound + 1
+              });
+            }
+          }
           
-          // Send latest results if available
+          // Send latest results if available (always show history even if depleted)
           if (player.history && player.history.length > 0) {
             const latestResult = player.history[player.history.length - 1];
             socket.emit('roundResults', {
@@ -283,14 +294,14 @@ export function createGameManager(io) {
             roundTime: currentRoundTime,
             currentTimer: remainingTime
           });
-        }
-        
-        // Send countdown if applicable to all non-instructors
-        if (isCountdown && remainingTime > 0) {
-          socket.emit('roundCountdown', {
-            timeRemaining: remainingTime,
-            nextRound: session.currentRound + 1
-          });
+          
+          // Send countdown if applicable
+          if (isCountdown && remainingTime > 0) {
+            socket.emit('roundCountdown', {
+              timeRemaining: remainingTime,
+              nextRound: session.currentRound + 1
+            });
+          }
         }
       }
       
@@ -407,6 +418,13 @@ export function createGameManager(io) {
     session.players.forEach(player => {
       if (player.role === 'student') {
         const pond = session.ponds.get(player.pondId);
+        
+        // Don't send round updates to students in depleted ponds
+        if (pond?.depleted) {
+          console.log(`⚠️  Skipping roundStarted for ${player.name} - pond depleted`);
+          return;
+        }
+        
         io.to(player.socketId).emit('roundStarted', {
           round: session.currentRound,
           roundTime: currentRoundTime,
@@ -591,8 +609,11 @@ export function createGameManager(io) {
       pond.remainingFish = Math.min(pond.remainingFish * 2, maxFish);
       const fishAfterDoubling = pond.remainingFish;
       
-      // Check if pond is depleted
+      // Check if pond is depleted and mark it permanently
       const pondDepleted = fishAfterDoubling === 0;
+      if (pondDepleted) {
+        pond.depleted = true; // Mark pond as permanently depleted
+      }
       
       // Update history with remaining fish after doubling AND queue emissions
       pondPlayers.forEach(player => {
@@ -674,8 +695,24 @@ export function createGameManager(io) {
       clearInterval(session.timers.countdownInterval);
     }
     
+    // Helper function to emit countdown only to active players (not in depleted ponds)
+    const emitCountdownToActivePlayers = (payload) => {
+      session.players.forEach(player => {
+        if (player.role === 'student') {
+          const pond = session.ponds.get(player.pondId);
+          // Only send to students whose ponds are NOT depleted
+          if (!pond?.depleted) {
+            io.to(player.socketId).emit('roundCountdown', payload);
+          }
+        } else if (player.role === 'instructor' || player.role === 'observer') {
+          // Always send to instructors and observers
+          io.to(player.socketId).emit('roundCountdown', payload);
+        }
+      });
+    };
+    
     // Emit initial countdown
-    io.to(session.code).emit('roundCountdown', {
+    emitCountdownToActivePlayers({
       timeRemaining,
       nextRound: session.currentRound + 1
     });
@@ -685,7 +722,7 @@ export function createGameManager(io) {
       timeRemaining -= 1;
       
       if (timeRemaining > 0) {
-        io.to(session.code).emit('roundCountdown', {
+        emitCountdownToActivePlayers({
           timeRemaining,
           nextRound: session.currentRound + 1
         });
