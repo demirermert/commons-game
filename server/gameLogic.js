@@ -175,6 +175,12 @@ export function createGameManager(io) {
       existingPlayer.socketId = socket.id;
       existingPlayer.connected = true;
       
+      // If they were AI-controlled (disconnected during game), make them human again
+      if (existingPlayer.isAI) {
+        existingPlayer.isAI = false;
+        console.log(`👤 ${playerName} reconnected - now human-controlled again`);
+      }
+      
       // Remove the old socket ID entry if it's different
       if (oldSocketId !== socket.id) {
         session.players.delete(oldSocketId);
@@ -812,8 +818,18 @@ export function createGameManager(io) {
     sessions.forEach(session => {
       const player = session.players.get(socketId);
       if (!player) return;
+      
       player.connected = false;
+      
+      // If student disconnects during an active game, mark them as AI
+      // so they continue playing with random submissions
+      if (player.role === 'student' && session.status === STATUS.RUNNING) {
+        player.isAI = true;
+        console.log(`🤖 Student ${player.name} disconnected - now AI-controlled`);
+      }
+      
       broadcastSession(session);
+      
       if (session.instructorSocket === socketId) {
         console.log(`Instructor disconnected from session ${session.code}`);
       }
