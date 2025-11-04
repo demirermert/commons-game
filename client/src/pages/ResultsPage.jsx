@@ -185,7 +185,7 @@ export function ResultsPage() {
             <span className="status-tag">{session.status?.toUpperCase() || 'LOBBY'}</span>
             {(session.status === 'running' || session.status === 'active') && (
               <span style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem' }}>
-                Round {session.currentRound} of {session.config?.rounds || 0}
+                Round {roundActive ? session.currentRound : Math.max(0, session.currentRound - 1)} of {session.config?.rounds || 0}
               </span>
             )}
             {roundActive && roundTimer !== null && (
