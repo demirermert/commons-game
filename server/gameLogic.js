@@ -586,29 +586,29 @@ export function createGameManager(io) {
       let totalCaught = 0;
       const allocations = [];
       
-      if (totalRequested <= pond.remainingFish) {
-        // If total requested is less than or equal to available, allocate proportionally
+      // ALWAYS use proportional allocation (prorated)
+      // If total requested exceeds available, each player gets: (requested / totalRequested) * availableFish
+      // Example: 8 fish available, requests [2,4,3,4] (total=13)
+      //   Player 1: 8 * (2/13) ≈ 1.23 fish
+      //   Player 2: 8 * (4/13) ≈ 2.46 fish
+      //   Player 3: 8 * (3/13) ≈ 1.85 fish
+      //   Player 4: 8 * (4/13) ≈ 2.46 fish
+      
+      if (totalRequested > 0) {
         pondPlayers.forEach(player => {
           const submission = session.submissions.get(player.socketId);
           const requested = submission ? submission.fishCount : 0;
           // Proportional allocation: (requested / totalRequested) * availableFish
-          const proportionalCatch = totalRequested > 0 
-            ? Math.round((requested / totalRequested) * Math.min(totalRequested, pond.remainingFish))
-            : 0;
-          allocations.push({ player, requested, caught: proportionalCatch });
-          totalCaught += proportionalCatch;
+          const proportionalCatch = (requested / totalRequested) * pond.remainingFish;
+          const roundedCatch = Math.round(proportionalCatch * 100) / 100; // Round to 2 decimal places
+          allocations.push({ player, requested, caught: roundedCatch });
+          totalCaught += roundedCatch;
         });
       } else {
-        // If total requested exceeds available, allocate sequentially (original logic)
-        let caughtSoFar = 0;
+        // Nobody requested anything
         pondPlayers.forEach(player => {
-          const submission = session.submissions.get(player.socketId);
-          const requested = submission ? submission.fishCount : 0;
-          const actualCatch = Math.min(requested, Math.max(0, pond.remainingFish - caughtSoFar));
-          allocations.push({ player, requested, caught: actualCatch });
-          caughtSoFar += actualCatch;
+          allocations.push({ player, requested: 0, caught: 0 });
         });
-        totalCaught = caughtSoFar;
       }
 
       // Update each player's results in this pond
