@@ -18,6 +18,7 @@ export function ResultsPage() {
   const [roundTimer, setRoundTimer] = useState(null);
   const [roundActive, setRoundActive] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [currentRoundNumber, setCurrentRoundNumber] = useState(0);
 
   useEffect(() => {
     const handleJoinedSession = payload => {
@@ -36,6 +37,7 @@ export function ResultsPage() {
       setRoundActive(true);
       setRoundTimer(payload.roundTime);
       setCountdown(null);
+      setCurrentRoundNumber(payload.round);
     };
 
     const handleRoundSummary = () => {
@@ -185,7 +187,7 @@ export function ResultsPage() {
             <span className="status-tag">{session.status?.toUpperCase() || 'LOBBY'}</span>
             {(session.status === 'running' || session.status === 'active') && (
               <span style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem' }}>
-                Round {roundActive ? session.currentRound : Math.max(1, session.currentRound - 1)} of {session.config?.rounds || 0}
+                Round {currentRoundNumber || session.currentRound || 0} of {session.config?.rounds || 0}
               </span>
             )}
             {roundActive && roundTimer !== null && (

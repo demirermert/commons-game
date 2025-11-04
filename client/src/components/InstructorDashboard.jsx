@@ -21,7 +21,8 @@ export function InstructorDashboard({
   onDismissError,
   countdown,
   roundTimer,
-  roundActive
+  roundActive,
+  currentRoundNumber
 }) {
   const [hoveredPond, setHoveredPond] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -121,7 +122,7 @@ export function InstructorDashboard({
                 fontWeight: 'bold',
                 fontSize: '1.1rem'
               }}>
-                📊 Round {roundActive ? (session?.currentRound || 0) : Math.max(1, (session?.currentRound || 0) - 1)} of {session?.config?.rounds || 0}
+                📊 Round {currentRoundNumber || session?.currentRound || 0} of {session?.config?.rounds || 0}
               </div>
             )}
             {roundActive && roundTimer !== null && (

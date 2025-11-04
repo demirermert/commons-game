@@ -21,6 +21,7 @@ export function InstructorPage() {
   const [countdown, setCountdown] = useState(null);
   const [roundTimer, setRoundTimer] = useState(null);
   const [roundActive, setRoundActive] = useState(false);
+  const [currentRoundNumber, setCurrentRoundNumber] = useState(0);
 
   useEffect(() => {
     const handleJoinedSession = payload => {
@@ -70,6 +71,7 @@ export function InstructorPage() {
       setRoundActive(true);
       setRoundTimer(payload.roundTime);
       setCountdown(null);
+      setCurrentRoundNumber(payload.round);
     };
     const handleRoundCountdown = payload => {
       setCountdown(payload);
@@ -273,6 +275,7 @@ export function InstructorPage() {
         countdown={countdown}
         roundTimer={roundTimer}
         roundActive={roundActive}
+        currentRoundNumber={currentRoundNumber}
       />
     </div>
   );
