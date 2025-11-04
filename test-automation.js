@@ -437,8 +437,8 @@ async function autoSubmitForStudent(studentPage, studentNum, roundsToPlay) {
       
       console.log(`✅ Student ${studentNum} Round ${round}: Round started`);
       
-      // Generate random fish count (1 to 5, not 0)
-      const randomFish = Math.floor(Math.random() * 5) + 1;
+      // Generate random fish count (0 to 4, matching maxCatchPerRound)
+      const randomFish = Math.floor(Math.random() * 5);
       
       console.log(`🎣 Student ${studentNum} Round ${round}: Attempting to submit ${randomFish} fish`);
       
