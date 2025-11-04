@@ -308,7 +308,7 @@ export function StudentPage() {
         totalRounds={session?.config?.rounds || 5}
         roundActive={roundActive}
         timer={timer}
-        maxCatch={session?.config?.maxCatchPerRound || 5}
+        maxCatch={session?.config?.maxCatchPerRound || 4}
         remainingFish={(() => {
           // Priority order for getting fish count:
           // 1. Latest result (most accurate after round completion)
