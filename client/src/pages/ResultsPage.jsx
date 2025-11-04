@@ -208,13 +208,15 @@ export function ResultsPage() {
           </div>
         </header>
 
-        {/* Ponds Section */}
-        <section style={{ marginBottom: '3rem' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>🐟 Ponds</h2>
+        {/* Ponds Section - Compact layout */}
+        <section style={{ marginBottom: '2.5rem' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '1.5rem' }}>🐟 Ponds</h2>
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1.5rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '1rem',
+            maxWidth: '900px',
+            margin: '0 auto'
           }}>
             {ponds.map((pond, index) => {
               const fishHealth = Math.min(100, Math.max(0, (pond.remainingFish / 40) * 100));
@@ -226,23 +228,23 @@ export function ResultsPage() {
                 <div
                   key={pond.id}
                   style={{
-                    padding: '1.5rem',
+                    padding: '1rem',
                     backgroundColor: bgColor,
-                    border: `3px solid ${borderColor}`,
-                    borderRadius: '12px',
+                    border: `2px solid ${borderColor}`,
+                    borderRadius: '8px',
                     textAlign: 'center'
                   }}
                 >
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: textColor, marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: textColor, marginBottom: '0.25rem' }}>
                     Pond {index + 1}
                   </div>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: textColor }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: textColor }}>
                     {pond.remainingFish}
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: textColor }}>
-                    fish remaining
+                  <div style={{ fontSize: '0.75rem', color: textColor }}>
+                    fish left
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: textColor, marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: textColor, marginTop: '0.25rem' }}>
                     {pond.players?.length || 0} players
                   </div>
                 </div>
@@ -251,35 +253,57 @@ export function ResultsPage() {
           </div>
         </section>
 
-        {/* Leaderboard Section */}
+        {/* Leaderboard Section - Show all players */}
         <section>
-          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>🏆 Leaderboard</h2>
+          <h2 style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '1.5rem' }}>🏆 Leaderboard</h2>
           {leaderboard.length > 0 ? (
-            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Total Fish</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.map((entry, index) => (
-                    <tr key={index} style={{ 
-                      backgroundColor: index === 0 ? '#fef3c7' : index === 1 ? '#e5e7eb' : index === 2 ? '#fed7aa' : 'transparent'
-                    }}>
-                      <td>
-                        <strong style={{ fontSize: '1.2rem' }}>
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                        </strong>
-                      </td>
-                      <td><strong>{entry.name}</strong></td>
-                      <td><strong>{entry.totalFish}</strong></td>
+            <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+              <div style={{ 
+                maxHeight: '500px', 
+                overflowY: 'auto', 
+                border: '2px solid #e5e7eb', 
+                borderRadius: '8px',
+                backgroundColor: 'white'
+              }}>
+                <table className="table" style={{ marginBottom: 0 }}>
+                  <thead style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    backgroundColor: '#f9fafb',
+                    zIndex: 1,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }}>
+                    <tr>
+                      <th style={{ width: '80px' }}>Rank</th>
+                      <th>Player</th>
+                      <th style={{ width: '100px' }}>Total Fish</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((entry, index) => (
+                      <tr key={index} style={{ 
+                        backgroundColor: index === 0 ? '#fef3c7' : index === 1 ? '#e5e7eb' : index === 2 ? '#fed7aa' : 'transparent'
+                      }}>
+                        <td>
+                          <strong style={{ fontSize: index < 3 ? '1.2rem' : '1rem' }}>
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                          </strong>
+                        </td>
+                        <td><strong>{entry.name}</strong></td>
+                        <td><strong>{entry.totalFish}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p style={{ 
+                textAlign: 'center', 
+                color: '#6b7280', 
+                fontSize: '0.875rem', 
+                marginTop: '0.5rem' 
+              }}>
+                Showing all {leaderboard.length} players
+              </p>
             </div>
           ) : (
             <p style={{ textAlign: 'center', color: '#6b7280' }}>
