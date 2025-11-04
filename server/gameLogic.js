@@ -171,8 +171,17 @@ export function createGameManager(io) {
     
     if (existingPlayer) {
       // Player is reconnecting - preserve their data, just update socket
+      const oldSocketId = existingPlayer.socketId;
       existingPlayer.socketId = socket.id;
       existingPlayer.connected = true;
+      
+      // Remove the old socket ID entry if it's different
+      if (oldSocketId !== socket.id) {
+        session.players.delete(oldSocketId);
+        console.log(`🔄 Player ${playerName} reconnected: ${oldSocketId} → ${socket.id}`);
+      }
+      
+      // Add with new socket ID
       session.players.set(socket.id, existingPlayer);
     } else {
       // New player
