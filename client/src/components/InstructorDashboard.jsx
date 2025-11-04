@@ -480,13 +480,22 @@ export function InstructorDashboard({
       {session?.status === 'complete' && ponds.length > 0 && (
         <section style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: '#fef3c7', borderRadius: '12px', border: '3px solid #f59e0b' }}>
           <h3 style={{ marginTop: 0, textAlign: 'center', color: '#92400e', fontSize: '1.5rem' }}>
-            🏆 Pond Winners 🏆
+            🏆 Pond Winners (Copy & Paste) 🏆
           </h3>
-          <p style={{ textAlign: 'center', color: '#78350f', marginBottom: '1.5rem' }}>
-            Top player from each pond
+          <p style={{ textAlign: 'center', color: '#78350f', marginBottom: '1rem', fontSize: '0.9rem' }}>
+            Click names to copy
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-            {ponds.map(pond => {
+          
+          {/* Simple list format for easy copying */}
+          <div style={{ 
+            backgroundColor: 'white', 
+            padding: '1.5rem', 
+            borderRadius: '8px',
+            border: '2px solid #f59e0b',
+            maxWidth: '600px',
+            margin: '0 auto'
+          }}>
+            {ponds.map((pond, index) => {
               // Get all players in this pond
               const pondPlayerObjects = pond.players
                 .map(playerId => players.find(p => p.socketId === playerId))
@@ -503,32 +512,86 @@ export function InstructorDashboard({
                 <div
                   key={pond.id}
                   style={{
-                    padding: '1rem',
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    border: '2px solid #f59e0b',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                    textAlign: 'center'
+                    padding: '0.75rem',
+                    marginBottom: index < ponds.length - 1 ? '0.5rem' : 0,
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderLeft: '4px solid #f59e0b'
                   }}
                 >
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#92400e', fontSize: '1.1rem' }}>
-                    {pond.id}
-                  </h4>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-                    🥇
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>🥇</span>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: 500 }}>
+                        {pond.id}
+                      </div>
+                      <div 
+                        style={{ 
+                          fontSize: '1.1rem', 
+                          fontWeight: 'bold', 
+                          color: '#1f2937',
+                          userSelect: 'all',
+                          cursor: 'text'
+                        }}
+                        title="Click to select and copy"
+                      >
+                        {winner.name}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.25rem' }}>
-                    {winner.name}
-                  </div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}>
+                  <div style={{ 
+                    fontSize: '1rem', 
+                    fontWeight: 'bold', 
+                    color: '#059669',
+                    textAlign: 'right'
+                  }}>
                     {winner.totalFish} fish
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                    Out of {pondPlayerObjects.length} players
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 'normal' }}>
+                      of {pondPlayerObjects.length} players
+                    </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+          
+          {/* Copy all names button */}
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <button
+              onClick={() => {
+                const winners = ponds.map(pond => {
+                  const pondPlayerObjects = pond.players
+                    .map(playerId => players.find(p => p.socketId === playerId))
+                    .filter(p => p && p.role === 'student');
+                  const winner = pondPlayerObjects.reduce((top, player) => {
+                    return (!top || player.totalFish > top.totalFish) ? player : top;
+                  }, null);
+                  return winner?.name;
+                }).filter(Boolean).join('\n');
+                
+                navigator.clipboard.writeText(winners).then(() => {
+                  alert('✅ Winner names copied to clipboard!');
+                }).catch(() => {
+                  alert('⚠️ Could not copy. Please select and copy manually.');
+                });
+              }}
+              style={{
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              📋 Copy All Winner Names
+            </button>
           </div>
         </section>
       )}
