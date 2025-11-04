@@ -153,13 +153,8 @@ export function StudentPage() {
       return;
     }
     
-    // If names are not provided, generate a random name
-    let playerName;
-    if (!firstName.trim() || !lastName.trim()) {
-      playerName = generateRandomName();
-    } else {
-      playerName = `${firstName.trim()} ${lastName.trim()}`;
-    }
+    // Names are now required, so just use them directly
+    const playerName = `${firstName.trim()} ${lastName.trim()}`;
     
     // Update URL for students to persist their session on refresh
     const url = new URL(window.location.href);
@@ -246,6 +241,7 @@ export function StudentPage() {
                   type="text"
                   value={firstName}
                   onChange={event => setFirstName(event.target.value)}
+                  required
                 />
               </div>
               <div className="input-row">
@@ -255,6 +251,7 @@ export function StudentPage() {
                   type="text"
                   value={lastName}
                   onChange={event => setLastName(event.target.value)}
+                  required
                 />
               </div>
             </div>
