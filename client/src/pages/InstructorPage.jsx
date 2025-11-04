@@ -5,9 +5,9 @@ import { InstructorDashboard } from '../components/InstructorDashboard.jsx';
 const DEFAULT_CONFIG = {
   rounds: 5,
   roundTime: 30,
-  initialFish: 20,
-  maxFish: 40,
-  maxCatchPerRound: 5,
+  initialFish: 16,
+  maxFish: 999999,
+  maxCatchPerRound: 4,
   playersPerPond: 4
 };
 

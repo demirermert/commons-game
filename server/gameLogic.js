@@ -3,9 +3,9 @@ const DEFAULT_CONFIG = {
   roundTime: 30,
   resultRevealTime: 2, // Brief pause before showing results
   countdownTime: 10, // Countdown between rounds
-  initialFish: 20,
-  maxFish: 40, // Maximum fish population (cap after doubling)
-  maxCatchPerRound: 5,
+  initialFish: 16,
+  maxFish: 999999, // Effectively no cap - fish can grow indefinitely
+  maxCatchPerRound: 4,
   playersPerPond: 4  // Changed from playersPerGame to playersPerPond
 };
 

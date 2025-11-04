@@ -224,7 +224,7 @@ export function StudentView({
               <li>Each round, you can choose to catch 0 to {maxCatch} fish from your pond</li>
               <li>You share this pond with <strong>{playersPerPond ? (playersPerPond - 1) : 'other'}</strong> other player{playersPerPond && playersPerPond > 2 ? 's' : ''} (total of {playersPerPond || '4'} players per pond)</li>
               <li><strong>Fish allocation:</strong> If the total requested by all players is less than available fish, each player gets their requested amount proportionally. If total requested exceeds available fish, players get fish on a first-come basis until the pond is empty</li>
-              <li>After everyone makes their decision, the remaining fish in the pond will <strong>double</strong> (up to a maximum of {initialFish + 20})</li>
+              <li>After everyone makes their decision, the remaining fish in the pond will <strong>double</strong> (with no limit!)</li>
               <li>If all the fish are caught, the pond is empty and cannot recover</li>
               <li><strong>At the end of the game</strong>, any remaining fish in the pond will be <strong>split equally</strong> among all players in that pond</li>
             </ul>
