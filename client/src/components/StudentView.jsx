@@ -254,8 +254,8 @@ export function StudentView({
         </div>
       ) : !gameComplete ? (
         <>
-          {/* Pond Depleted Message - Show if pond has 0 fish */}
-          {pondDepleted ? (
+          {/* Pond Depleted Message - Only show when NOT in countdown (so students see results first) */}
+          {pondDepleted && !countdown ? (
             <div style={{
               padding: '2rem',
               backgroundColor: '#fee2e2',
@@ -300,19 +300,25 @@ export function StudentView({
               }}>
                 Please wait while other ponds finish their game...
               </p>
-              {countdown && countdown.timeRemaining > 0 && (
-                <div style={{
-                  marginTop: '1rem',
-                  padding: '1rem',
-                  backgroundColor: '#fef3c7',
-                  border: '2px solid #f59e0b',
-                  borderRadius: '8px'
-                }}>
-                  <p style={{ color: '#92400e', fontWeight: 'bold', margin: 0 }}>
-                    Next round starts in: {countdown.timeRemaining}s
-                  </p>
-                </div>
-              )}
+            </div>
+          ) : pondDepleted && countdown ? (
+            /* When pond is depleted AND in countdown, show a compact depleted message */
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#fee2e2',
+              border: '2px solid #dc2626',
+              borderRadius: '8px',
+              textAlign: 'center',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{ 
+                color: '#991b1b', 
+                fontWeight: 'bold',
+                margin: 0,
+                fontSize: '1.1rem'
+              }}>
+                🚫 Your pond is depleted - waiting for other ponds to finish...
+              </p>
             </div>
           ) : (
             <>
