@@ -237,6 +237,9 @@ export function createGameManager(io) {
       if (role !== 'instructor' && session.status === STATUS.RUNNING && session.currentRound > 0) {
         const player = session.players.get(socket.id);
         
+        // Dynamic round time: 30s for round 1, 20s for all other rounds
+        const currentRoundTime = session.currentRound === 1 ? 30 : 20;
+        
         // Calculate remaining time
         let remainingTime = 0;
         let isCountdown = false;
@@ -247,9 +250,9 @@ export function createGameManager(io) {
           remainingTime = Math.max(0, session.config.countdownTime - elapsed);
           isCountdown = true;
         } else if (session.timestamps.roundStartTime) {
-          // In active round
+          // In active round - use dynamic round time
           const elapsed = Math.floor((Date.now() - session.timestamps.roundStartTime) / 1000);
-          remainingTime = Math.max(0, session.config.roundTime - elapsed);
+          remainingTime = Math.max(0, currentRoundTime - elapsed);
         }
         
         if (player && player.pondId) {
@@ -259,7 +262,7 @@ export function createGameManager(io) {
           // Send round state
           socket.emit('roundStarted', {
             round: session.currentRound,
-            roundTime: session.config.roundTime,
+            roundTime: currentRoundTime,
             remainingFish: pond?.remainingFish || 0,
             pondId: player.pondId,
             currentTimer: remainingTime
@@ -277,7 +280,7 @@ export function createGameManager(io) {
           // Observers get basic timer info (like instructors)
           socket.emit('roundStarted', {
             round: session.currentRound,
-            roundTime: session.config.roundTime,
+            roundTime: currentRoundTime,
             currentTimer: remainingTime
           });
         }
@@ -397,13 +400,16 @@ export function createGameManager(io) {
     session.timestamps.roundStartTime = Date.now();
     session.timestamps.countdownStartTime = null;
     
+    // Dynamic round time: 30s for round 1, 20s for all other rounds
+    const currentRoundTime = session.currentRound === 1 ? 30 : 20;
+    
     // Broadcast round start to all players with their pond info
     session.players.forEach(player => {
       if (player.role === 'student') {
         const pond = session.ponds.get(player.pondId);
         io.to(player.socketId).emit('roundStarted', {
           round: session.currentRound,
-          roundTime: session.config.roundTime,
+          roundTime: currentRoundTime,
           remainingFish: pond?.remainingFish || 0,
           pondId: player.pondId
         });
@@ -411,7 +417,7 @@ export function createGameManager(io) {
         // Send roundStarted to instructor and observers too so they can see the timer
         io.to(player.socketId).emit('roundStarted', {
           round: session.currentRound,
-          roundTime: session.config.roundTime
+          roundTime: currentRoundTime
         });
       }
     });
@@ -436,7 +442,7 @@ export function createGameManager(io) {
     
     session.timers.round = setTimeout(() => {
       forceSubmitMissing(session);
-    }, session.config.roundTime * 1000);
+    }, currentRoundTime * 1000);
   }
 
   function forceSubmitMissing(session) {
