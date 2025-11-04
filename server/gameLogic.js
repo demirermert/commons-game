@@ -595,7 +595,8 @@ export function createGameManager(io) {
       //   Player 4: 8 * (4/13) ≈ 2.46 fish
       
       if (totalRequested > 0) {
-        pondPlayers.forEach(player => {
+        // First pass: calculate proportional amounts and round them
+        pondPlayers.forEach((player, index) => {
           const submission = session.submissions.get(player.socketId);
           const requested = submission ? submission.fishCount : 0;
           // Proportional allocation: (requested / totalRequested) * availableFish
@@ -604,6 +605,21 @@ export function createGameManager(io) {
           allocations.push({ player, requested, caught: roundedCatch });
           totalCaught += roundedCatch;
         });
+        
+        // Fix rounding errors: adjust the allocation to match exactly available fish
+        // Add/subtract the rounding error from the player with the largest allocation
+        const roundingError = Math.round((pond.remainingFish - totalCaught) * 100) / 100;
+        if (Math.abs(roundingError) > 0.001) {
+          // Find player with largest allocation to adjust
+          let maxIndex = 0;
+          for (let i = 1; i < allocations.length; i++) {
+            if (allocations[i].caught > allocations[maxIndex].caught) {
+              maxIndex = i;
+            }
+          }
+          allocations[maxIndex].caught = Math.round((allocations[maxIndex].caught + roundingError) * 100) / 100;
+          totalCaught = pond.remainingFish; // Now totalCaught exactly matches available
+        }
       } else {
         // Nobody requested anything
         pondPlayers.forEach(player => {
@@ -636,9 +652,13 @@ export function createGameManager(io) {
 
       // Update pond's remaining fish and double them (capped at maxFish)
       pond.remainingFish = Math.max(0, pond.remainingFish - totalCaught);
+      // Round to avoid floating point precision issues
+      pond.remainingFish = Math.round(pond.remainingFish * 100) / 100;
       const fishBeforeDoubling = pond.remainingFish;
       const maxFish = session.config.maxFish || 40; // Fallback to 40 if not set
       pond.remainingFish = Math.min(pond.remainingFish * 2, maxFish);
+      // Round after doubling to avoid tiny remainders
+      pond.remainingFish = Math.round(pond.remainingFish * 100) / 100;
       const fishAfterDoubling = pond.remainingFish;
       
       // Check if pond is depleted and mark it permanently
