@@ -122,30 +122,32 @@ export function StudentView({
           marginBottom: '1.5rem',
           transition: 'all 0.3s ease'
         }}>
-          {/* Timer Display */}
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '1rem',
-            padding: countdown ? '1rem' : '0.75rem',
-            backgroundColor: countdown ? '#fde68a' : gameComplete ? '#d1fae5' : 'rgba(255, 255, 255, 0.7)',
-            borderRadius: '12px',
-            border: countdown ? '3px solid #f59e0b' : gameComplete ? '2px solid #10b981' : '2px solid rgba(0, 0, 0, 0.1)',
-            boxShadow: countdown ? '0 4px 12px rgba(245, 158, 11, 0.4)' : 'none'
-          }}>
+          {/* Timer Display - Hide "Calculating results" when depleted pond shows results */}
+          {!(pondDepleted && latestResult && !roundActive && !countdown) && (
             <div style={{
-              fontSize: countdown ? '1.58rem' : gameComplete ? '1.75rem' : roundActive ? '1.75rem' : '1.25rem',
-              fontWeight: 'bold',
-              color: countdown ? '#f59e0b' : gameComplete ? '#059669' : '#1f2937'
+              textAlign: 'center',
+              marginBottom: '1rem',
+              padding: countdown ? '1rem' : '0.75rem',
+              backgroundColor: countdown ? '#fde68a' : gameComplete ? '#d1fae5' : 'rgba(255, 255, 255, 0.7)',
+              borderRadius: '12px',
+              border: countdown ? '3px solid #f59e0b' : gameComplete ? '2px solid #10b981' : '2px solid rgba(0, 0, 0, 0.1)',
+              boxShadow: countdown ? '0 4px 12px rgba(245, 158, 11, 0.4)' : 'none'
             }}>
-              {countdown 
-                ? `Round ${countdown.nextRound} starts in ${countdown.timeRemaining}s`
-                : gameComplete
-                  ? '🎉 Game Complete!'
-                  : roundActive 
-                    ? `Round ${currentRound} ends in ${timer}s` 
-                    : 'Calculating results...'}
+              <div style={{
+                fontSize: countdown ? '1.58rem' : gameComplete ? '1.75rem' : roundActive ? '1.75rem' : '1.25rem',
+                fontWeight: 'bold',
+                color: countdown ? '#f59e0b' : gameComplete ? '#059669' : '#1f2937'
+              }}>
+                {countdown 
+                  ? `Round ${countdown.nextRound} starts in ${countdown.timeRemaining}s`
+                  : gameComplete
+                    ? '🎉 Game Complete!'
+                    : roundActive 
+                      ? `Round ${currentRound} ends in ${timer}s` 
+                      : 'Calculating results...'}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Large Fish Count Display */}
           <div style={{ 
