@@ -221,6 +221,7 @@ export function StudentView({
             
             <p><strong>The Rules:</strong></p>
             <ul style={{ paddingLeft: '1.5rem' }}>
+              <li><strong>Number of rounds:</strong> The game will have {totalRounds} rounds</li>
               <li><strong>Starting fish:</strong> Your pond starts with {initialFish} fish</li>
               <li>Each round, you can choose to catch 0 to {maxCatch} fish from your pond</li>
               <li>You share this pond with {playersPerPond ? (playersPerPond - 1) : 'other'} other player{playersPerPond && playersPerPond > 2 ? 's' : ''} (total of {playersPerPond || '4'} players per pond)</li>
