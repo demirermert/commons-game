@@ -449,7 +449,10 @@ export function createGameManager(io) {
     const students = Array.from(session.players.values()).filter(p => p.role === 'student');
     students.forEach(student => {
       if (!session.submissions.has(student.socketId)) {
-        recordSubmission(session, student.socketId, 0, true);
+        // Submit random number between 0 and maxCatchPerRound for students who didn't submit
+        const randomFish = Math.floor(Math.random() * (session.config.maxCatchPerRound + 1));
+        recordSubmission(session, student.socketId, randomFish, true);
+        console.log(`⚠️  Auto-submitted ${randomFish} fish for ${student.name} (no response)`);
       }
     });
     // Timer expired, finalize the round
