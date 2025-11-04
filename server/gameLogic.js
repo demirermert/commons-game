@@ -147,6 +147,9 @@ export function createGameManager(io) {
       throw new Error('Name is required');
     }
     
+    console.log(`🔍 RegisterPlayer: "${playerName}" (${role}) - Socket: ${socket.id}`);
+    console.log(`   Current players in session:`, Array.from(session.players.values()).map(p => `${p.name} (${p.socketId}, connected: ${p.connected})`));
+    
     // Allow observers to join without being counted as players
     if (role === 'observer') {
       const observer = {
@@ -168,6 +171,8 @@ export function createGameManager(io) {
     const existingPlayer = Array.from(session.players.values()).find(
       p => p.name === playerName && p.role === (role === 'instructor' ? 'instructor' : 'student')
     );
+    
+    console.log(`   Existing player found:`, existingPlayer ? `Yes - ${existingPlayer.socketId} (connected: ${existingPlayer.connected})` : 'No');
     
     if (existingPlayer) {
       // Player is reconnecting - preserve their data, just update socket
