@@ -121,7 +121,7 @@ export function InstructorDashboard({
                 fontWeight: 'bold',
                 fontSize: '1.1rem'
               }}>
-                📊 Round {roundActive ? (session?.currentRound || 0) : Math.max(0, (session?.currentRound || 0) - 1)} of {session?.config?.rounds || 0}
+                📊 Round {roundActive ? (session?.currentRound || 0) : Math.max(1, (session?.currentRound || 0) - 1)} of {session?.config?.rounds || 0}
               </div>
             )}
             {roundActive && roundTimer !== null && (
