@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { socket } from '../socket.js';
 
+// Helper function to format fish counts
+function formatFish(value) {
+  if (value === undefined || value === null) return '-';
+  const num = Number(value);
+  // If it's an integer, show no decimals. Otherwise show 2 decimals.
+  return Number.isInteger(num) ? num.toString() : num.toFixed(2);
+}
+
 export function ResultsPage() {
   const [session, setSession] = useState(null);
   const [sessionCode, setSessionCode] = useState('');
@@ -240,7 +248,7 @@ export function ResultsPage() {
                     Pond {index + 1}
                   </div>
                   <div style={{ fontSize: '2rem', fontWeight: 'bold', color: textColor }}>
-                    {pond.remainingFish}
+                    {formatFish(pond.remainingFish)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: textColor }}>
                     fish left
@@ -291,7 +299,7 @@ export function ResultsPage() {
                           </strong>
                         </td>
                         <td><strong>{entry.name}</strong></td>
-                        <td><strong>{entry.totalFish}</strong></td>
+                        <td><strong>{formatFish(entry.totalFish)}</strong></td>
                       </tr>
                     ))}
                   </tbody>
