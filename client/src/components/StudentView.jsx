@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
+// Helper function to format fish counts to 2 decimal places
+function formatFish(value) {
+  if (value === undefined || value === null) return '-';
+  return Number(value).toFixed(2);
+}
+
 export function StudentView({
   sessionCode,
   currentRound,
@@ -89,16 +95,16 @@ export function StudentView({
             Previous Round Result
           </h3>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            You caught: <strong>{latestResult.caught}</strong> fish
+            You caught: <strong>{formatFish(latestResult.caught)}</strong> fish
           </p>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            🐟 Pond caught <strong>{latestResult.pondTotalCaught}</strong> fish total
+            🐟 Pond caught <strong>{formatFish(latestResult.pondTotalCaught)}</strong> fish total
           </p>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-            Remaining <strong>{latestResult.fishBeforeDoubling}</strong> fish doubled to <strong>{latestResult.fishAfterDoubling}</strong> fish!
+            Remaining <strong>{formatFish(latestResult.fishBeforeDoubling)}</strong> fish doubled to <strong>{formatFish(latestResult.fishAfterDoubling)}</strong> fish!
           </p>
           <p style={{ fontSize: '1.1rem', color: '#1e40af', margin: 0, fontWeight: 600 }}>
-            Your total fish: <strong>{latestResult.totalFish}</strong>
+            Your total fish: <strong>{formatFish(latestResult.totalFish)}</strong>
           </p>
         </div>
       )}
@@ -197,7 +203,7 @@ export function StudentView({
                   {player.name}
                 </span>
                 <span style={{ color: '#059669', fontWeight: 'bold' }}>
-                  {player.totalFish} fish
+                  {formatFish(player.totalFish)} fish
                 </span>
               </div>
             ))}
@@ -383,9 +389,9 @@ export function StudentView({
             {history.map(item => (
               <div className="history-item" key={item.round}>
                 <span>{item.round}</span>
-                <span>{item.caught}</span>
-                <span>{item.pondTotalCaught !== undefined ? item.pondTotalCaught : '-'}</span>
-                <span>{item.remainingFish !== undefined ? item.remainingFish : '-'}</span>
+                <span>{formatFish(item.caught)}</span>
+                <span>{item.pondTotalCaught !== undefined ? formatFish(item.pondTotalCaught) : '-'}</span>
+                <span>{item.remainingFish !== undefined ? formatFish(item.remainingFish) : '-'}</span>
               </div>
             ))}
             <div className="history-item" style={{ 
@@ -396,11 +402,11 @@ export function StudentView({
               padding: '1rem 0.5rem'
             }}>
               <span>Total</span>
-              <span>{history.reduce((sum, item) => sum + item.caught, 0)}</span>
-              <span>{history.reduce((sum, item) => sum + (item.pondTotalCaught || 0), 0)}</span>
+              <span>{formatFish(history.reduce((sum, item) => sum + item.caught, 0))}</span>
+              <span>{formatFish(history.reduce((sum, item) => sum + (item.pondTotalCaught || 0), 0))}</span>
               <span style={{ fontStyle: 'italic', color: '#6b7280' }}>
                 {history.length > 0 && history[history.length - 1].remainingFish !== undefined 
-                  ? history[history.length - 1].remainingFish 
+                  ? formatFish(history[history.length - 1].remainingFish)
                   : '-'}
               </span>
             </div>

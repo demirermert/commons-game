@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+// Helper function to format fish counts to 2 decimal places
+function formatFish(value) {
+  if (value === undefined || value === null) return '-';
+  return Number(value).toFixed(2);
+}
+
 export function InstructorDashboard({
   instructorName,
   session,
@@ -55,7 +61,7 @@ export function InstructorDashboard({
             {data.name}
           </p>
           <p style={{ margin: '0 0 8px 0', color: '#059669', fontWeight: 'bold' }}>
-            Total: {data['Total Fish']} fish
+            Total: {formatFish(data['Total Fish'])} fish
           </p>
           <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px' }}>
             <p style={{ margin: '0 0 4px 0', fontSize: '0.875rem', fontWeight: 'bold', color: '#6b7280' }}>
@@ -70,7 +76,7 @@ export function InstructorDashboard({
               })
               .map(roundKey => (
                 <p key={roundKey} style={{ margin: '0', fontSize: '0.875rem', color: '#374151' }}>
-                  {roundKey}: <strong>{data[roundKey]}</strong> fish
+                  {roundKey}: <strong>{formatFish(data[roundKey])}</strong> fish
                 </p>
               ))
             }
@@ -411,7 +417,7 @@ export function InstructorDashboard({
                         </strong>
                       </td>
                       <td><strong>{entry.name}</strong></td>
-                      <td><strong>{entry.totalFish}</strong></td>
+                      <td><strong>{formatFish(entry.totalFish)}</strong></td>
                     </tr>
                   ))}
                 </tbody>
@@ -548,7 +554,7 @@ export function InstructorDashboard({
                     color: '#059669',
                     textAlign: 'right'
                   }}>
-                    {winner.totalFish} fish
+                    {formatFish(winner.totalFish)} fish
                     <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 'normal' }}>
                       of {pondPlayerObjects.length} players
                     </div>
@@ -639,7 +645,7 @@ export function InstructorDashboard({
                         const caught = data[name] || 0;
                         return (
                           <td key={name} style={{ padding: '6px 8px', textAlign: 'center', color: '#059669', fontWeight: 'bold' }}>
-                            {caught}
+                            {formatFish(caught)}
                           </td>
                         );
                       })}
@@ -651,7 +657,7 @@ export function InstructorDashboard({
                       const total = hoveredPond.catchMatrix.reduce((sum, { data }) => sum + (data[name] || 0), 0);
                       return (
                         <td key={name} style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', color: '#059669' }}>
-                          {total}
+                          {formatFish(total)}
                         </td>
                       );
                     })}
