@@ -236,23 +236,25 @@ export function createGameManager(io) {
       // If student is reconnecting to an active round, send current round state
       if (role !== 'instructor' && session.status === STATUS.RUNNING && session.currentRound > 0) {
         const player = session.players.get(socket.id);
+        
+        // Calculate remaining time
+        let remainingTime = 0;
+        let isCountdown = false;
+        
+        if (session.timestamps.countdownStartTime) {
+          // In countdown phase
+          const elapsed = Math.floor((Date.now() - session.timestamps.countdownStartTime) / 1000);
+          remainingTime = Math.max(0, session.config.countdownTime - elapsed);
+          isCountdown = true;
+        } else if (session.timestamps.roundStartTime) {
+          // In active round
+          const elapsed = Math.floor((Date.now() - session.timestamps.roundStartTime) / 1000);
+          remainingTime = Math.max(0, session.config.roundTime - elapsed);
+        }
+        
         if (player && player.pondId) {
+          // Students with ponds get full info
           const pond = session.ponds.get(player.pondId);
-          
-          // Calculate remaining time
-          let remainingTime = 0;
-          let isCountdown = false;
-          
-          if (session.timestamps.countdownStartTime) {
-            // In countdown phase
-            const elapsed = Math.floor((Date.now() - session.timestamps.countdownStartTime) / 1000);
-            remainingTime = Math.max(0, session.config.countdownTime - elapsed);
-            isCountdown = true;
-          } else if (session.timestamps.roundStartTime) {
-            // In active round
-            const elapsed = Math.floor((Date.now() - session.timestamps.roundStartTime) / 1000);
-            remainingTime = Math.max(0, session.config.roundTime - elapsed);
-          }
           
           // Send round state
           socket.emit('roundStarted', {
@@ -263,14 +265,6 @@ export function createGameManager(io) {
             currentTimer: remainingTime
           });
           
-          // Send countdown if applicable
-          if (isCountdown && remainingTime > 0) {
-            socket.emit('roundCountdown', {
-              timeRemaining: remainingTime,
-              nextRound: session.currentRound + 1
-            });
-          }
-          
           // Send latest results if available
           if (player.history && player.history.length > 0) {
             const latestResult = player.history[player.history.length - 1];
@@ -279,6 +273,21 @@ export function createGameManager(io) {
               history: player.history
             });
           }
+        } else if (role === 'observer') {
+          // Observers get basic timer info (like instructors)
+          socket.emit('roundStarted', {
+            round: session.currentRound,
+            roundTime: session.config.roundTime,
+            currentTimer: remainingTime
+          });
+        }
+        
+        // Send countdown if applicable to all non-instructors
+        if (isCountdown && remainingTime > 0) {
+          socket.emit('roundCountdown', {
+            timeRemaining: remainingTime,
+            nextRound: session.currentRound + 1
+          });
         }
       }
       
@@ -398,8 +407,8 @@ export function createGameManager(io) {
           remainingFish: pond?.remainingFish || 0,
           pondId: player.pondId
         });
-      } else if (player.role === 'instructor') {
-        // Send roundStarted to instructor too so they can see the timer
+      } else if (player.role === 'instructor' || player.role === 'observer') {
+        // Send roundStarted to instructor and observers too so they can see the timer
         io.to(player.socketId).emit('roundStarted', {
           round: session.currentRound,
           roundTime: session.config.roundTime
