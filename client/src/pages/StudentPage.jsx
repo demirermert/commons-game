@@ -343,7 +343,7 @@ export function StudentPage() {
                 ?.map(playerId => session?.players?.find(player => player.socketId === playerId)?.name || playerId)
             : []
         }
-        initialFish={session?.config?.initialFish || 20}
+        initialFish={session?.config?.initialFish || 16}
         gameComplete={gameComplete}
         pondDepleted={pondDepleted}
         playersPerPond={session?.config?.playersPerPond || 4}

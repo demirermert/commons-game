@@ -197,7 +197,7 @@ export function InstructorDashboard({
               ).filter(p => p);
               const pondPlayers = pondPlayerObjects.map(p => p.name);
               
-              const initialFish = session?.config?.initialFish || 20;
+              const initialFish = session?.config?.initialFish || 16;
               const fishHealth = Math.min(100, Math.max(0, (pond.remainingFish / initialFish) * 100));
               const fishCount = pond.remainingFish;
               

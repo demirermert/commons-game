@@ -155,6 +155,7 @@ export function ResultsPage() {
 
   const students = session.players?.filter(p => p.role === 'student') || [];
   const ponds = session.ponds || [];
+  const initialFish = session.config?.initialFish || 16;
 
   // Prepare leaderboard data
   const leaderboard = students
@@ -219,7 +220,7 @@ export function ResultsPage() {
             margin: '0 auto'
           }}>
             {ponds.map((pond, index) => {
-              const fishHealth = Math.min(100, Math.max(0, (pond.remainingFish / 40) * 100));
+              const fishHealth = Math.min(100, Math.max(0, (pond.remainingFish / initialFish) * 100));
               const bgColor = fishHealth > 66 ? '#d1fae5' : fishHealth > 33 ? '#fed7aa' : '#fecaca';
               const borderColor = fishHealth > 66 ? '#10b981' : fishHealth > 33 ? '#f59e0b' : '#ef4444';
               const textColor = fishHealth > 66 ? '#065f46' : fishHealth > 33 ? '#9a3412' : '#991b1b';
