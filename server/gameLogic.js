@@ -190,6 +190,18 @@ export function createGameManager(io) {
       if (oldSocketId !== socket.id) {
         session.players.delete(oldSocketId);
         console.log(`🔄 Player ${playerName} reconnected: ${oldSocketId} → ${socket.id}`);
+        
+        // CRITICAL FIX: Update the pond's playerIds array with new socket ID
+        if (existingPlayer.pondId) {
+          const pond = session.ponds.get(existingPlayer.pondId);
+          if (pond) {
+            const oldIndex = pond.playerIds.indexOf(oldSocketId);
+            if (oldIndex !== -1) {
+              pond.playerIds[oldIndex] = socket.id;
+              console.log(`🔄 Updated ${existingPlayer.pondId} playerIds: ${oldSocketId} → ${socket.id}`);
+            }
+          }
+        }
       }
       
       // Add with new socket ID
