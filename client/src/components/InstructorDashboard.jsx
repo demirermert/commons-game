@@ -4,7 +4,9 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 // Helper function to format fish counts to 2 decimal places
 function formatFish(value) {
   if (value === undefined || value === null) return '-';
-  return Number(value).toFixed(2);
+  const num = Number(value);
+  // If it's an integer, show no decimals. Otherwise show 2 decimals.
+  return Number.isInteger(num) ? num.toString() : num.toFixed(2);
 }
 
 export function InstructorDashboard({
