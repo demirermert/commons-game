@@ -7,6 +7,9 @@ export function ResultsPage() {
   const [sessionCodeInput, setSessionCodeInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [roundTimer, setRoundTimer] = useState(null);
+  const [roundActive, setRoundActive] = useState(false);
+  const [countdown, setCountdown] = useState(null);
 
   useEffect(() => {
     const handleJoinedSession = payload => {
@@ -21,20 +24,58 @@ export function ResultsPage() {
       setIsLoading(false);
     };
 
+    const handleRoundStarted = payload => {
+      setRoundActive(true);
+      setRoundTimer(payload.roundTime);
+      setCountdown(null);
+    };
+
+    const handleRoundSummary = () => {
+      setRoundActive(false);
+      setRoundTimer(null);
+    };
+
+    const handleRoundCountdown = payload => {
+      setCountdown(payload);
+    };
+
+    const handleSessionComplete = () => {
+      setRoundActive(false);
+      setRoundTimer(null);
+      setCountdown(null);
+    };
+
     const handleError = message => {
       setErrorMessage(message);
     };
 
     socket.on('joinedSession', handleJoinedSession);
     socket.on('sessionUpdate', handleSessionUpdate);
+    socket.on('roundStarted', handleRoundStarted);
+    socket.on('roundSummary', handleRoundSummary);
+    socket.on('roundCountdown', handleRoundCountdown);
+    socket.on('sessionComplete', handleSessionComplete);
     socket.on('errorMessage', handleError);
 
     return () => {
       socket.off('joinedSession', handleJoinedSession);
       socket.off('sessionUpdate', handleSessionUpdate);
+      socket.off('roundStarted', handleRoundStarted);
+      socket.off('roundSummary', handleRoundSummary);
+      socket.off('roundCountdown', handleRoundCountdown);
+      socket.off('sessionComplete', handleSessionComplete);
       socket.off('errorMessage', handleError);
     };
   }, []);
+
+  // Timer effect for round countdown
+  useEffect(() => {
+    if (!roundActive || roundTimer === null || roundTimer <= 0) return;
+    const interval = setInterval(() => {
+      setRoundTimer(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [roundActive, roundTimer]);
 
   const handleJoinSession = event => {
     event.preventDefault();
@@ -131,12 +172,38 @@ export function ResultsPage() {
           <p style={{ fontSize: '1.2rem', color: '#6b7280' }}>
             Session: <strong>{sessionCode}</strong>
           </p>
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
             <span className="status-tag">{session.status?.toUpperCase() || 'LOBBY'}</span>
-            {session.status === 'running' && (
-              <span style={{ marginLeft: '1rem', color: '#059669', fontWeight: 600 }}>
+            {(session.status === 'running' || session.status === 'active') && (
+              <span style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem' }}>
                 Round {session.currentRound} of {session.config?.rounds || 0}
               </span>
+            )}
+            {roundActive && roundTimer !== null && (
+              <div style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dbeafe',
+                color: '#1e40af',
+                border: '2px solid #3b82f6',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '1.1rem'
+              }}>
+                ⏱️ Timer: {roundTimer}s
+              </div>
+            )}
+            {countdown && countdown.timeRemaining > 0 && !roundActive && (
+              <div style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#fef3c7',
+                color: '#f59e0b',
+                border: '2px solid #f59e0b',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '1.1rem'
+              }}>
+                ⏱️ Next Round: {countdown.timeRemaining}s
+              </div>
             )}
           </div>
         </header>
