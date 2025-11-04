@@ -586,15 +586,28 @@ export function createGameManager(io) {
       let totalCaught = 0;
       const allocations = [];
       
-      // ALWAYS use proportional allocation (prorated)
-      // If total requested exceeds available, each player gets: (requested / totalRequested) * availableFish
-      // Example: 8 fish available, requests [2,4,3,4] (total=13)
-      //   Player 1: 8 * (2/13) ≈ 1.23 fish
-      //   Player 2: 8 * (4/13) ≈ 2.46 fish
-      //   Player 3: 8 * (3/13) ≈ 1.85 fish
-      //   Player 4: 8 * (4/13) ≈ 2.46 fish
-      
-      if (totalRequested > 0) {
+      if (totalRequested === 0) {
+        // Nobody requested anything
+        pondPlayers.forEach(player => {
+          allocations.push({ player, requested: 0, caught: 0 });
+        });
+      } else if (totalRequested <= pond.remainingFish) {
+        // Enough fish for everyone - give each player EXACTLY what they requested
+        pondPlayers.forEach(player => {
+          const submission = session.submissions.get(player.socketId);
+          const requested = submission ? submission.fishCount : 0;
+          allocations.push({ player, requested, caught: requested });
+          totalCaught += requested;
+        });
+      } else {
+        // NOT enough fish - use proportional allocation (prorated)
+        // Each player gets: (requested / totalRequested) * availableFish
+        // Example: 8 fish available, requests [2,4,3,4] (total=13)
+        //   Player 1: 8 * (2/13) ≈ 1.23 fish
+        //   Player 2: 8 * (4/13) ≈ 2.46 fish
+        //   Player 3: 8 * (3/13) ≈ 1.85 fish
+        //   Player 4: 8 * (4/13) ≈ 2.46 fish
+        
         // First pass: calculate proportional amounts and round them
         pondPlayers.forEach((player, index) => {
           const submission = session.submissions.get(player.socketId);
@@ -620,11 +633,6 @@ export function createGameManager(io) {
           allocations[maxIndex].caught = Math.round((allocations[maxIndex].caught + roundingError) * 100) / 100;
           totalCaught = pond.remainingFish; // Now totalCaught exactly matches available
         }
-      } else {
-        // Nobody requested anything
-        pondPlayers.forEach(player => {
-          allocations.push({ player, requested: 0, caught: 0 });
-        });
       }
 
       // Update each player's results in this pond

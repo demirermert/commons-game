@@ -225,7 +225,7 @@ export function StudentView({
               <li><strong>Starting fish:</strong> Your pond starts with {initialFish} fish</li>
               <li>Each round, you can choose to catch 0 to {maxCatch} fish from your pond</li>
               <li>You share this pond with {playersPerPond ? (playersPerPond - 1) : 'other'} other player{playersPerPond && playersPerPond > 2 ? 's' : ''} (total of {playersPerPond || '4'} players per pond)</li>
-              <li><strong>Fish allocation:</strong> Fish are allocated proportionally based on what everyone requests. Each player receives: (your request / total requested) × available fish. For example, if 8 fish are available and players request 2, 4, 3, and 4 fish (total 13), they would receive 1.23, 2.46, 1.85, and 2.46 fish respectively</li>
+              <li><strong>Fish allocation:</strong> If your pond has enough fish for everyone's requests, each player gets exactly what they asked for. If there aren't enough fish, they are allocated proportionally: (your request / total requested) × available fish. Example: 8 fish available, requests [2,4,3,4] (total 13) → players get [1.23, 2.46, 1.85, 2.46]</li>
               <li>After everyone submits, the remaining fish in the pond will <strong>double</strong> (with no limit!)</li>
               <li><strong>Warning:</strong> If all the fish are caught (0 remaining), the pond is depleted and cannot recover</li>
               <li><strong>At the end of the game</strong>, any remaining fish in the pond will be <strong>split equally</strong> among all players in that pond</li>
