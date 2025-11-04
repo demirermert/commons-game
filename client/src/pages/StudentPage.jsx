@@ -29,6 +29,7 @@ export function StudentPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [countdown, setCountdown] = useState(null);
   const [gameComplete, setGameComplete] = useState(false);
+  const [pondDepleted, setPondDepleted] = useState(false);
   
   // Use ref for pendingHistory to avoid recreating socket listeners
   const pendingHistoryRef = useRef(null);
@@ -79,6 +80,12 @@ export function StudentPage() {
       pendingHistoryRef.current = payload.history || [];
       setHasSubmitted(true);
       setRoundActive(false);
+      
+      // Check if pond is depleted
+      if (payload.pondDepleted) {
+        setPondDepleted(true);
+        console.log('🚫 Pond depleted! Game over for this pond.');
+      }
     };
     const handleRoundCountdown = payload => {
       setCountdown(payload);
@@ -338,6 +345,7 @@ export function StudentPage() {
         }
         initialFish={session?.config?.initialFish || 20}
         gameComplete={gameComplete}
+        pondDepleted={pondDepleted}
         playersPerPond={session?.config?.playersPerPond || 4}
         pondPlayersResults={
           gameComplete && (roundInfo?.pondId || latestResult?.pondId)

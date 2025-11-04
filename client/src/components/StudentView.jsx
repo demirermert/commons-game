@@ -17,6 +17,7 @@ export function StudentView({
   pondPlayers,
   initialFish,
   gameComplete,
+  pondDepleted,
   pondPlayersResults,
   playersPerPond
 }) {
@@ -244,60 +245,124 @@ export function StudentView({
         </div>
       ) : !gameComplete ? (
         <>
-          {/* Only show input form when NOT in countdown (hide during 10s break) */}
-          {!countdown && (
-            <>
-              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <label htmlFor="fish-input" style={{ fontSize: '1.5rem', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
-                    How many fish to catch?
-                  </label>
-                  <input
-                    id="fish-input"
-                    type="number"
-                    step="1"
-                    min="0"
-                    max={maxCatch}
-                    value={fishCount}
-                    onChange={event => setFishCount(event.target.value)}
-                    disabled={!roundActive || hasSubmitted}
-                    placeholder={`0 to ${maxCatch}`}
-                    style={{ 
-                      width: '220px',
-                      maxWidth: '90%',
-                      padding: '1.25rem 1rem',
-                      fontSize: 'clamp(2rem, 6vw, 2.5rem)',
-                      textAlign: 'center',
-                      border: '3px solid #2563eb',
-                      borderRadius: '8px',
-                      fontWeight: 'bold',
-                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                      transition: 'all 0.2s ease'
-                    }}
-                  />
-                  {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
-                </div>
-                <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
-                  {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit'}
-                </button>
-              </form>
-
-              {hasSubmitted && roundActive && (
-                <div style={{ 
-                  backgroundColor: '#d1fae5', 
-                  border: '2px solid #059669', 
-                  borderRadius: '8px', 
-                  padding: '1rem', 
+          {/* Pond Depleted Message - Show if pond has 0 fish */}
+          {pondDepleted ? (
+            <div style={{
+              padding: '2rem',
+              backgroundColor: '#fee2e2',
+              border: '3px solid #dc2626',
+              borderRadius: '12px',
+              textAlign: 'center',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+                🚫
+              </div>
+              <h2 style={{ 
+                color: '#991b1b', 
+                marginTop: 0, 
+                marginBottom: '1rem',
+                fontSize: '1.8rem'
+              }}>
+                Your Pond is Depleted!
+              </h2>
+              <p style={{ 
+                color: '#7f1d1d', 
+                fontSize: '1.2rem', 
+                marginBottom: '1rem',
+                fontWeight: 600
+              }}>
+                All fish have been caught from your pond.
+              </p>
+              <p style={{ 
+                color: '#991b1b', 
+                fontSize: '1.1rem',
+                margin: '0.5rem 0'
+              }}>
+                Your pond cannot recover. 
+              </p>
+              <p style={{ 
+                color: '#7f1d1d', 
+                fontSize: '1rem',
+                marginTop: '1.5rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                borderRadius: '8px'
+              }}>
+                Please wait while other ponds finish their game...
+              </p>
+              {countdown && countdown.timeRemaining > 0 && (
+                <div style={{
                   marginTop: '1rem',
-                  textAlign: 'center'
+                  padding: '1rem',
+                  backgroundColor: '#fef3c7',
+                  border: '2px solid #f59e0b',
+                  borderRadius: '8px'
                 }}>
-                  <p style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
-                    ✓ Your decision has been submitted!
-                  </p>
-                  <p style={{ color: '#047857', margin: '0.5rem 0 0 0' }}>
-                    Waiting for other players to submit their decisions...
+                  <p style={{ color: '#92400e', fontWeight: 'bold', margin: 0 }}>
+                    Next round starts in: {countdown.timeRemaining}s
                   </p>
                 </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Only show input form when NOT in countdown (hide during 10s break) */}
+              {!countdown && (
+                <>
+                  <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <label htmlFor="fish-input" style={{ fontSize: '1.5rem', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
+                        How many fish to catch?
+                      </label>
+                      <input
+                        id="fish-input"
+                        type="number"
+                        step="1"
+                        min="0"
+                        max={maxCatch}
+                        value={fishCount}
+                        onChange={event => setFishCount(event.target.value)}
+                        disabled={!roundActive || hasSubmitted}
+                        placeholder={`0 to ${maxCatch}`}
+                        style={{ 
+                          width: '220px',
+                          maxWidth: '90%',
+                          padding: '1.25rem 1rem',
+                          fontSize: 'clamp(2rem, 6vw, 2.5rem)',
+                          textAlign: 'center',
+                          border: '3px solid #2563eb',
+                          borderRadius: '8px',
+                          fontWeight: 'bold',
+                          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      />
+                      {error && <div style={{ color: '#dc2626', marginTop: '0.5rem' }}>{error}</div>}
+                    </div>
+                    <button className="primary" type="submit" disabled={!roundActive || hasSubmitted}>
+                      {hasSubmitted ? 'Submitted - Waiting for others...' : 'Submit'}
+                    </button>
+                  </form>
+
+                  {hasSubmitted && roundActive && (
+                    <div style={{ 
+                      backgroundColor: '#d1fae5', 
+                      border: '2px solid #059669', 
+                      borderRadius: '8px', 
+                      padding: '1rem', 
+                      marginTop: '1rem',
+                      textAlign: 'center'
+                    }}>
+                      <p style={{ color: '#059669', fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
+                        ✓ Your decision has been submitted!
+                      </p>
+                      <p style={{ color: '#047857', margin: '0.5rem 0 0 0' }}>
+                        Waiting for other players to submit their decisions...
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

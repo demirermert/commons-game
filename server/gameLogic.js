@@ -582,12 +582,16 @@ export function createGameManager(io) {
       pond.remainingFish = Math.min(pond.remainingFish * 2, maxFish);
       const fishAfterDoubling = pond.remainingFish;
       
+      // Check if pond is depleted
+      const pondDepleted = fishAfterDoubling === 0;
+      
       // Update history with remaining fish after doubling AND queue emissions
       pondPlayers.forEach(player => {
         if (player.history.length > 0) {
           player.history[player.history.length - 1].remainingFish = fishAfterDoubling;
           player.history[player.history.length - 1].fishBeforeDoubling = fishBeforeDoubling;
           player.history[player.history.length - 1].fishAfterDoubling = fishAfterDoubling;
+          player.history[player.history.length - 1].pondDepleted = pondDepleted;
           
           // Queue emission instead of emitting immediately
           emissionQueue.push({
@@ -602,13 +606,18 @@ export function createGameManager(io) {
               pondId: pondId,
               pondTotalCaught: totalCaught,
               fishBeforeDoubling: fishBeforeDoubling,
-              fishAfterDoubling: fishAfterDoubling
+              fishAfterDoubling: fishAfterDoubling,
+              pondDepleted: pondDepleted
             }
           });
         }
       });
       
-      console.log(`${pondId} Round ${roundNumber}: Caught ${totalCaught}, Before doubling: ${fishBeforeDoubling}, After: ${fishAfterDoubling} (capped at ${maxFish})`);
+      if (pondDepleted) {
+        console.log(`⚠️  ${pondId} Round ${roundNumber}: POND DEPLETED! All fish caught. Game over for this pond.`);
+      } else {
+        console.log(`${pondId} Round ${roundNumber}: Caught ${totalCaught}, Before doubling: ${fishBeforeDoubling}, After: ${fishAfterDoubling} (capped at ${maxFish})`);
+      }
     });
 
     session.roundResults.push({ 

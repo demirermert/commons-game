@@ -9,7 +9,6 @@ export function InstructorDashboard({
   startDisabledReason,
   onStart,
   leaderboard,
-  latestRound,
   errorMessage,
   onDismissError,
   countdown,
@@ -477,33 +476,60 @@ export function InstructorDashboard({
         </section>
       )}
 
-      {/* Latest Round Snapshot */}
-      {latestRound && (
-        <section style={{ marginTop: '1.5rem' }}>
-          <h3>📊 Latest Round Snapshot</h3>
-          <p style={{ color: '#6b7280', marginBottom: '1rem' }}>Round {latestRound.round}</p>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Pond</th>
-                <th>Player</th>
-                <th>Requested</th>
-                <th>Caught</th>
-                <th>Total Fish</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latestRound.results.map(result => (
-                <tr key={result.socketId}>
-                  <td><strong>{result.pondId}</strong></td>
-                  <td>{result.name || result.socketId}</td>
-                  <td>{result.requested}</td>
-                  <td><strong>{result.caught}</strong></td>
-                  <td><strong>{result.totalFish}</strong></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Pond Winners - Show at end of game */}
+      {session?.status === 'complete' && ponds.length > 0 && (
+        <section style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: '#fef3c7', borderRadius: '12px', border: '3px solid #f59e0b' }}>
+          <h3 style={{ marginTop: 0, textAlign: 'center', color: '#92400e', fontSize: '1.5rem' }}>
+            🏆 Pond Winners 🏆
+          </h3>
+          <p style={{ textAlign: 'center', color: '#78350f', marginBottom: '1.5rem' }}>
+            Top player from each pond
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+            {ponds.map(pond => {
+              // Get all players in this pond
+              const pondPlayerObjects = pond.players
+                .map(playerId => players.find(p => p.socketId === playerId))
+                .filter(p => p && p.role === 'student');
+              
+              // Find the winner (highest totalFish)
+              const winner = pondPlayerObjects.reduce((top, player) => {
+                return (!top || player.totalFish > top.totalFish) ? player : top;
+              }, null);
+              
+              if (!winner) return null;
+              
+              return (
+                <div
+                  key={pond.id}
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    border: '2px solid #f59e0b',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    textAlign: 'center'
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#92400e', fontSize: '1.1rem' }}>
+                    {pond.id}
+                  </h4>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                    🥇
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.25rem' }}>
+                    {winner.name}
+                  </div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}>
+                    {winner.totalFish} fish
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                    Out of {pondPlayerObjects.length} players
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
 

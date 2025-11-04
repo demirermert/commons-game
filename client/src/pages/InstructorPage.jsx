@@ -17,7 +17,6 @@ export function InstructorPage() {
   const [joinInfo, setJoinInfo] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [leaderboardData, setLeaderboardData] = useState(new Map());
-  const [latestRoundSummary, setLatestRoundSummary] = useState(null);
   const [instructorConfig, setInstructorConfig] = useState(DEFAULT_CONFIG);
   const [countdown, setCountdown] = useState(null);
   const [roundTimer, setRoundTimer] = useState(null);
@@ -27,7 +26,6 @@ export function InstructorPage() {
     const handleJoinedSession = payload => {
       setJoinInfo(payload);
       setLeaderboardData(new Map());
-      setLatestRoundSummary(null);
       setErrorMessage('');
     };
     const handleSessionUpdate = payload => {
@@ -51,7 +49,6 @@ export function InstructorPage() {
       }
     };
     const handleRoundSummary = payload => {
-      setLatestRoundSummary(payload);
       setRoundActive(false);
       setRoundTimer(null);
       setLeaderboardData(prev => {
@@ -78,7 +75,6 @@ export function InstructorPage() {
       setCountdown(payload);
     };
     const handleSessionComplete = payload => {
-      setLatestRoundSummary(payload.rounds[payload.rounds.length - 1] || null);
       setCountdown(null);
       setRoundActive(false);
       setRoundTimer(null);
@@ -272,7 +268,6 @@ export function InstructorPage() {
         startDisabledReason={startDisabledReason}
         onStart={handleStartSession}
         leaderboard={leaderboard}
-        latestRound={latestRoundSummary}
         errorMessage={errorMessage}
         onDismissError={() => setErrorMessage('')}
         countdown={countdown}
