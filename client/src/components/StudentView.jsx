@@ -254,8 +254,8 @@ export function StudentView({
         </div>
       ) : !gameComplete ? (
         <>
-          {/* Pond Depleted Message - Only show when NOT in countdown (so students see results first) */}
-          {pondDepleted && !countdown ? (
+          {/* Pond Depleted Message - Only show during active round when depleted */}
+          {pondDepleted && roundActive ? (
             <div style={{
               padding: '2rem',
               backgroundColor: '#fee2e2',
@@ -301,8 +301,8 @@ export function StudentView({
                 Please wait while other ponds finish their game...
               </p>
             </div>
-          ) : pondDepleted && countdown ? (
-            /* When pond is depleted AND in countdown, show a compact depleted message */
+          ) : pondDepleted && (countdown || (!roundActive && !countdown)) ? (
+            /* When pond is depleted during countdown OR calculating results, show compact message */
             <div style={{
               padding: '1rem',
               backgroundColor: '#fee2e2',
